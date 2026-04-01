@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// College Model
+model College {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  code         String        @unique // e.g., "JIIT", "DTU"
+  location     String?
+  departments  Department[]
+  members      Member[]
+  participants Participant[]
+
+  @@map("colleges")
+}
+
+// Department Model - Each belongs to a college
+model Department {
+  id           String        @id @default(cuid())
+  name         String
+  code         String // e.g., "CSE", "ECE"
+  collegeId    String
+  college      College       @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  members      Member[]
+  participants Participant[]
+
+  @@unique([collegeId, code]) // Each department code is unique within a college
+  @@index([collegeId])
+  @@map("departments")
+}
+
+// Events Model
+model Event {
+  id                   String             @id @default(cuid())
+  title                String
+  description          String             @db.Text
+  eventType            EventType
+  hasTeam              Boolean            @default(false)
+  maxTeamMembers       Int?
+  maxParticipants      Int?
+  registrationDeadline DateTime
+  schedule             EventSchedule[] // Each day with its time slot and location
+  participants         EventParticipant[]
+  teams                EventTeam[]
+  joinRequests         TeamJoinRequest[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([eventType])
+  @@map("events")
+}
+
+// Teams that can participate in team-based events
+model Team {
+  id           String             @id @default(cuid())
+  name         String
+  leaderId     String // Participant who is the team leader (and creator)
+  leader       Participant        @relation("TeamLeader", fields: [leaderId], references: [id])
+  participants EventParticipant[]
+  events       EventTeam[]
+  joinRequests TeamJoinRequest[]
+  createdAt    DateTime           @default(now())
+
+  @@index([name])
+  @@index([leaderId])
+  @@map("teams")
+}
+
+// Junction table between events and teams
+// Application layer must ensure only events with hasTeam = true can have entries here.
+model EventTeam {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, teamId])
+  @@index([eventId])
+  @@index([teamId])
+  @@map("event_teams")
+}
+
+// Event Schedule - Each day with time slot and location
+model EventSchedule {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  day       DateTime // The specific day
+  startTime String // e.g., "10:00 AM"
+  endTime   String // e.g., "2:00 PM"
+  location  String // Location for this specific day/time
+  notes     String? // Optional notes for this schedule
+
+  @@index([eventId])
+  @@map("event_schedules")
+}
+
+// Event Types Enum
+enum EventType {
+  INDUCTION
+  WORKSHOP
+  COMPETITION
+  SEMINAR
+  HACKATHON
+  MEETUP
+  OTHER
+}
+
+enum JoinRequestStatus {
+  PENDING
+  REJECTED
+}
+
+// Event Participants (Many-to-Many relationship)
+model EventParticipant {
+  id            String      @id @default(cuid())
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  teamId        String?
+  team          Team?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  registeredAt  DateTime    @default(now())
+
+  @@unique([eventId, participantId])
+  @@index([eventId])
+  @@index([participantId])
+  @@index([teamId])
+  @@map("event_participants")
+}
+
+model TeamJoinRequest {
+  id            String            @id @default(cuid())
+  eventId       String
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamId        String
+  team          Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  participantId String
+  participant   Participant       @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  status        JoinRequestStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([eventId, teamId, participantId])
+  @@index([eventId, participantId])
+  @@index([teamId, status])
+  @@map("team_join_requests")
+}
+
+// Participants Details
+model Participant {
+  id           String             @id
+  name         String
+  email        String             @unique
+  username     String             @unique
+  imageUrl     String
+  phone        String?
+  collegeId    String
+  college      College            @relation(fields: [collegeId], references: [id])
+  departmentId String
+  department   Department         @relation(fields: [departmentId], references: [id])
+  collegeIdNo  Int
+  year         String?
+  events       EventParticipant[]
+  ledTeams     Team[]             @relation("TeamLeader")
+  joinRequests TeamJoinRequest[]
+  createdAt    DateTime           @default(now())
+
+  @@index([collegeId])
+  @@index([departmentId])
+  @@map("participants")
+}
+
+// Projects Model
+model Project {
+  id          String          @id @default(cuid())
+  title       String
+  description String          @db.Text
+  content     Json // Quill JSON content (Delta format)
+  contentHtml String          @db.Text // HTML output from Quill
+  imageUrl    String?
+  githubRepo  String?
+  demoUrl     String?
+  tags        String[]
+  members     ProjectMember[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([title])
+  @@map("projects")
+}
+
+// Project Members (Many-to-Many relationship)
+model ProjectMember {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role      String? // Role in the project (e.g., "Lead Developer", "Designer")
+
+  @@unique([projectId, memberId])
+  @@index([projectId])
+  @@index([memberId])
+  @@map("project_members")
+}
+
+// Blogs Model
+model Blog {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String    @db.Text
+  content     Json // Quill JSON content (Delta format)
+  contentHtml String    @db.Text // HTML output from Quill
+  coverImage  String?
+  authorId    String
+  author      Member    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags        String[]
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  views       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([published])
+  @@map("blogs")
+}
+
+// Members (Team/Club Members)
+model Member {
+  id                 String           @id
+  name               String
+  email              String           @unique
+  username           String           @unique
+  phone              String?
+  imageUrl           String
+  bio                String?          @db.Text
+  collegeId          String
+  college            College          @relation(fields: [collegeId], references: [id])
+  departmentId       String
+  department         Department       @relation(fields: [departmentId], references: [id])
+  collegeIdNo        Int
+  graduationYear     Int? // Year they graduate/graduated
+  instagram          String?
+  linkedin           String?
+  github             String?
+  invitationAccepted Boolean          @default(false)
+  joinedAt           DateTime         @default(now())
+  acceptedAt         DateTime?
+  positions          MemberPosition[] // History of positions
+  projects           ProjectMember[]
+  blogs              Blog[]
+
+  @@index([collegeId])
+  @@index([departmentId])
+  @@map("members")
+}
+
+// Member Position History - tracks position changes over time
+// CONSTRAINT: No two positions for the same member can have overlapping date intervals
+// Validation logic: For any two positions P1 and P2 for the same member:
+//   P1.endDate must be BEFORE P2.startDate OR P2.endDate must be BEFORE P1.startDate
+//   (application layer must enforce this - check in API routes before saving)
+model MemberPosition {
+  id         String   @id @default(cuid())
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  position   Position
+  startMonth Int // 1-12
+  startYear  Int // e.g., 2023
+  endMonth   Int? // 1-12, null if ongoing
+  endYear    Int? // e.g., 2024, null if ongoing
+  createdAt  DateTime @default(now())
+
+  @@index([memberId])
+  @@index([startYear])
+  @@map("member_positions")
+}
+
+// Member Positions Enum
+enum Position {
+  CHAIRPERSON
+  VICE_CHAIRPERSON
+  TREASURER
+  TECHNICAL_HEAD
+  CODING_HEAD
+  LOGISTICS_HEAD
+  EXECUTIVE_MEMBER
+  MEMBER
+}
