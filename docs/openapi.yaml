@@ -30,6 +30,64 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: College name
+                              example: MIT
+                            code:
+                              type: string
+                              description: College code
+                              example: MIT001
+                            location:
+                              type: string
+                              description: College location
+                              example: Cambridge, MA
+                          required:
+                            - name
+                            - code
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - name: MIT
+                      code: MIT001
+                      location: Cambridge, MA
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List all colleges with pagination
       tags:
         - Colleges
@@ -41,10 +99,65 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCollegeDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: College name
+                  example: MIT
+                code:
+                  type: string
+                  description: College code
+                  example: MIT001
+                location:
+                  type: string
+                  description: College location
+                  example: Cambridge, MA
+              required:
+                - name
+                - code
+            example:
+              name: MIT
+              code: MIT001
+              location: Cambridge, MA
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: College name
+                        example: MIT
+                      code:
+                        type: string
+                        description: College code
+                        example: MIT001
+                      location:
+                        type: string
+                        description: College location
+                        example: Cambridge, MA
+                    required:
+                      - name
+                      - code
+              example:
+                success: true
+                data:
+                  name: MIT
+                  code: MIT001
+                  location: Cambridge, MA
       security:
         - team-auth: []
       summary: Create a new college (Admin only)
@@ -62,6 +175,41 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: College name
+                        example: MIT
+                      code:
+                        type: string
+                        description: College code
+                        example: MIT001
+                      location:
+                        type: string
+                        description: College location
+                        example: Cambridge, MA
+                    required:
+                      - name
+                      - code
+              example:
+                success: true
+                data:
+                  name: MIT
+                  code: MIT001
+                  location: Cambridge, MA
       summary: Get college by ID
       tags:
         - Colleges
@@ -78,10 +226,53 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCollegeDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: College name
+                code:
+                  type: string
+                  description: College code
+                location:
+                  type: string
+                  description: College location
+            example:
+              name: string
+              code: string
+              location: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: College name
+                      code:
+                        type: string
+                        description: College code
+                      location:
+                        type: string
+                        description: College location
+              example:
+                success: true
+                data:
+                  name: string
+                  code: string
+                  location: string
       security:
         - team-auth: []
       summary: Update college (Admin only)
@@ -98,6 +289,41 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: College name
+                        example: MIT
+                      code:
+                        type: string
+                        description: College code
+                        example: MIT001
+                      location:
+                        type: string
+                        description: College location
+                        example: Cambridge, MA
+                    required:
+                      - name
+                      - code
+              example:
+                success: true
+                data:
+                  name: MIT
+                  code: MIT001
+                  location: Cambridge, MA
       security:
         - team-auth: []
       summary: Delete college (Admin only)
@@ -115,6 +341,43 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Department name
+                          example: Computer Science
+                        code:
+                          type: string
+                          description: Department code
+                          example: CS
+                        collegeId:
+                          type: string
+                          description: College ID this department belongs to
+                      required:
+                        - name
+                        - code
+                        - collegeId
+              example:
+                success: true
+                data:
+                  - name: Computer Science
+                    code: CS
+                    collegeId: string
       summary: List departments for a college
       tags:
         - Colleges
@@ -130,6 +393,41 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Department name
+                        example: Computer Science
+                      code:
+                        type: string
+                        description: Department code
+                        example: CS
+                      collegeId:
+                        type: string
+                        description: College ID this department belongs to
+                    required:
+                      - name
+                      - code
+                      - collegeId
+              example:
+                success: true
+                data:
+                  name: Computer Science
+                  code: CS
+                  collegeId: string
       summary: Get department by ID
       tags:
         - Departments
@@ -146,10 +444,45 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateDepartmentDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Department name
+                code:
+                  type: string
+                  description: Department code
+            example:
+              name: string
+              code: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Department name
+                      code:
+                        type: string
+                        description: Department code
+              example:
+                success: true
+                data:
+                  name: string
+                  code: string
       security:
         - team-auth: []
       summary: Update department (Admin only)
@@ -166,6 +499,41 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Department name
+                        example: Computer Science
+                      code:
+                        type: string
+                        description: Department code
+                        example: CS
+                      collegeId:
+                        type: string
+                        description: College ID this department belongs to
+                    required:
+                      - name
+                      - code
+                      - collegeId
+              example:
+                success: true
+                data:
+                  name: Computer Science
+                  code: CS
+                  collegeId: string
       security:
         - team-auth: []
       summary: Delete department (Admin only)
@@ -180,10 +548,65 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDepartmentDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Department name
+                  example: Computer Science
+                code:
+                  type: string
+                  description: Department code
+                  example: CS
+                collegeId:
+                  type: string
+                  description: College ID this department belongs to
+              required:
+                - name
+                - code
+                - collegeId
+            example:
+              name: Computer Science
+              code: CS
+              collegeId: string
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Department name
+                        example: Computer Science
+                      code:
+                        type: string
+                        description: Department code
+                        example: CS
+                      collegeId:
+                        type: string
+                        description: College ID this department belongs to
+                    required:
+                      - name
+                      - code
+                      - collegeId
+              example:
+                success: true
+                data:
+                  name: Computer Science
+                  code: CS
+                  collegeId: string
       security:
         - team-auth: []
       summary: Create a new department (Admin only)
@@ -251,6 +674,92 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title:
+                              type: string
+                              description: Event title
+                              example: Robotics Workshop 2024
+                            description:
+                              type: string
+                              description: Event description
+                            eventType:
+                              type: string
+                              description: Event type
+                              enum:
+                                - INDUCTION
+                                - WORKSHOP
+                                - COMPETITION
+                                - SEMINAR
+                                - HACKATHON
+                                - MEETUP
+                                - OTHER
+                            hasTeam:
+                              type: boolean
+                              default: false
+                              description: Whether this is a team-based event
+                            maxTeamMembers:
+                              type: number
+                              minimum: 2
+                              description: Maximum team members (required if hasTeam is true)
+                            maxParticipants:
+                              type: number
+                              minimum: 1
+                              description: Maximum participants allowed
+                            registrationDeadline:
+                              type: string
+                              description: Registration deadline (ISO 8601 date)
+                              example: '2024-12-31T23:59:59Z'
+                          required:
+                            - title
+                            - description
+                            - eventType
+                            - registrationDeadline
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - title: Robotics Workshop 2024
+                      description: string
+                      eventType: INDUCTION
+                      registrationDeadline: '2024-12-31T23:59:59Z'
+                      hasTeam: false
+                      maxTeamMembers: 2
+                      maxParticipants: 1
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List all events with filters and pagination
       tags:
         - Events
@@ -262,10 +771,121 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateEventDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Event title
+                  example: Robotics Workshop 2024
+                description:
+                  type: string
+                  description: Event description
+                eventType:
+                  type: string
+                  description: Event type
+                  enum:
+                    - INDUCTION
+                    - WORKSHOP
+                    - COMPETITION
+                    - SEMINAR
+                    - HACKATHON
+                    - MEETUP
+                    - OTHER
+                hasTeam:
+                  type: boolean
+                  default: false
+                  description: Whether this is a team-based event
+                maxTeamMembers:
+                  type: number
+                  minimum: 2
+                  description: Maximum team members (required if hasTeam is true)
+                maxParticipants:
+                  type: number
+                  minimum: 1
+                  description: Maximum participants allowed
+                registrationDeadline:
+                  type: string
+                  description: Registration deadline (ISO 8601 date)
+                  example: '2024-12-31T23:59:59Z'
+              required:
+                - title
+                - description
+                - eventType
+                - registrationDeadline
+            example:
+              title: Robotics Workshop 2024
+              description: string
+              eventType: INDUCTION
+              registrationDeadline: '2024-12-31T23:59:59Z'
+              hasTeam: false
+              maxTeamMembers: 2
+              maxParticipants: 1
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Event title
+                        example: Robotics Workshop 2024
+                      description:
+                        type: string
+                        description: Event description
+                      eventType:
+                        type: string
+                        description: Event type
+                        enum:
+                          - INDUCTION
+                          - WORKSHOP
+                          - COMPETITION
+                          - SEMINAR
+                          - HACKATHON
+                          - MEETUP
+                          - OTHER
+                      hasTeam:
+                        type: boolean
+                        default: false
+                        description: Whether this is a team-based event
+                      maxTeamMembers:
+                        type: number
+                        minimum: 2
+                        description: Maximum team members (required if hasTeam is true)
+                      maxParticipants:
+                        type: number
+                        minimum: 1
+                        description: Maximum participants allowed
+                      registrationDeadline:
+                        type: string
+                        description: Registration deadline (ISO 8601 date)
+                        example: '2024-12-31T23:59:59Z'
+                    required:
+                      - title
+                      - description
+                      - eventType
+                      - registrationDeadline
+              example:
+                success: true
+                data:
+                  title: Robotics Workshop 2024
+                  description: string
+                  eventType: INDUCTION
+                  registrationDeadline: '2024-12-31T23:59:59Z'
+                  hasTeam: false
+                  maxTeamMembers: 2
+                  maxParticipants: 1
       security:
         - team-auth: []
       summary: Create a new event (Admin only)
@@ -283,6 +903,69 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Event title
+                        example: Robotics Workshop 2024
+                      description:
+                        type: string
+                        description: Event description
+                      eventType:
+                        type: string
+                        description: Event type
+                        enum:
+                          - INDUCTION
+                          - WORKSHOP
+                          - COMPETITION
+                          - SEMINAR
+                          - HACKATHON
+                          - MEETUP
+                          - OTHER
+                      hasTeam:
+                        type: boolean
+                        default: false
+                        description: Whether this is a team-based event
+                      maxTeamMembers:
+                        type: number
+                        minimum: 2
+                        description: Maximum team members (required if hasTeam is true)
+                      maxParticipants:
+                        type: number
+                        minimum: 1
+                        description: Maximum participants allowed
+                      registrationDeadline:
+                        type: string
+                        description: Registration deadline (ISO 8601 date)
+                        example: '2024-12-31T23:59:59Z'
+                    required:
+                      - title
+                      - description
+                      - eventType
+                      - registrationDeadline
+              example:
+                success: true
+                data:
+                  title: Robotics Workshop 2024
+                  description: string
+                  eventType: INDUCTION
+                  registrationDeadline: '2024-12-31T23:59:59Z'
+                  hasTeam: false
+                  maxTeamMembers: 2
+                  maxParticipants: 1
       summary: Get event by ID with schedules
       tags:
         - Events
@@ -299,10 +982,105 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateEventDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Event title
+                description:
+                  type: string
+                  description: Event description
+                eventType:
+                  type: string
+                  description: Event type
+                  enum:
+                    - INDUCTION
+                    - WORKSHOP
+                    - COMPETITION
+                    - SEMINAR
+                    - HACKATHON
+                    - MEETUP
+                    - OTHER
+                hasTeam:
+                  type: boolean
+                  description: Whether this is a team-based event
+                maxTeamMembers:
+                  type: number
+                  minimum: 2
+                  description: Maximum team members
+                maxParticipants:
+                  type: number
+                  minimum: 1
+                  description: Maximum participants
+                registrationDeadline:
+                  type: string
+                  description: Registration deadline (ISO 8601 date)
+            example:
+              title: string
+              description: string
+              eventType: INDUCTION
+              hasTeam: true
+              maxTeamMembers: 2
+              maxParticipants: 1
+              registrationDeadline: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Event title
+                      description:
+                        type: string
+                        description: Event description
+                      eventType:
+                        type: string
+                        description: Event type
+                        enum:
+                          - INDUCTION
+                          - WORKSHOP
+                          - COMPETITION
+                          - SEMINAR
+                          - HACKATHON
+                          - MEETUP
+                          - OTHER
+                      hasTeam:
+                        type: boolean
+                        description: Whether this is a team-based event
+                      maxTeamMembers:
+                        type: number
+                        minimum: 2
+                        description: Maximum team members
+                      maxParticipants:
+                        type: number
+                        minimum: 1
+                        description: Maximum participants
+                      registrationDeadline:
+                        type: string
+                        description: Registration deadline (ISO 8601 date)
+              example:
+                success: true
+                data:
+                  title: string
+                  description: string
+                  eventType: INDUCTION
+                  hasTeam: true
+                  maxTeamMembers: 2
+                  maxParticipants: 1
+                  registrationDeadline: string
       security:
         - team-auth: []
       summary: Update event (Admin only)
@@ -319,6 +1097,69 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Event title
+                        example: Robotics Workshop 2024
+                      description:
+                        type: string
+                        description: Event description
+                      eventType:
+                        type: string
+                        description: Event type
+                        enum:
+                          - INDUCTION
+                          - WORKSHOP
+                          - COMPETITION
+                          - SEMINAR
+                          - HACKATHON
+                          - MEETUP
+                          - OTHER
+                      hasTeam:
+                        type: boolean
+                        default: false
+                        description: Whether this is a team-based event
+                      maxTeamMembers:
+                        type: number
+                        minimum: 2
+                        description: Maximum team members (required if hasTeam is true)
+                      maxParticipants:
+                        type: number
+                        minimum: 1
+                        description: Maximum participants allowed
+                      registrationDeadline:
+                        type: string
+                        description: Registration deadline (ISO 8601 date)
+                        example: '2024-12-31T23:59:59Z'
+                    required:
+                      - title
+                      - description
+                      - eventType
+                      - registrationDeadline
+              example:
+                success: true
+                data:
+                  title: Robotics Workshop 2024
+                  description: string
+                  eventType: INDUCTION
+                  registrationDeadline: '2024-12-31T23:59:59Z'
+                  hasTeam: false
+                  maxTeamMembers: 2
+                  maxParticipants: 1
       security:
         - team-auth: []
       summary: Delete event (Admin only)
@@ -338,10 +1179,87 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateScheduleDto'
+              type: object
+              properties:
+                day:
+                  type: string
+                  description: Schedule date (ISO 8601)
+                  example: '2024-12-01'
+                startTime:
+                  type: string
+                  description: Start time (HH:MM)
+                  example: '09:00'
+                endTime:
+                  type: string
+                  description: End time (HH:MM)
+                  example: '17:00'
+                location:
+                  type: string
+                  description: Location
+                  example: Main Auditorium
+                notes:
+                  type: string
+                  description: Additional notes
+              required:
+                - day
+                - startTime
+                - endTime
+                - location
+            example:
+              day: '2024-12-01'
+              startTime: '09:00'
+              endTime: '17:00'
+              location: Main Auditorium
+              notes: string
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      day:
+                        type: string
+                        description: Schedule date (ISO 8601)
+                        example: '2024-12-01'
+                      startTime:
+                        type: string
+                        description: Start time (HH:MM)
+                        example: '09:00'
+                      endTime:
+                        type: string
+                        description: End time (HH:MM)
+                        example: '17:00'
+                      location:
+                        type: string
+                        description: Location
+                        example: Main Auditorium
+                      notes:
+                        type: string
+                        description: Additional notes
+                    required:
+                      - day
+                      - startTime
+                      - endTime
+                      - location
+              example:
+                success: true
+                data:
+                  day: '2024-12-01'
+                  startTime: '09:00'
+                  endTime: '17:00'
+                  location: Main Auditorium
+                  notes: string
       security:
         - team-auth: []
       summary: Add schedule to event (Admin only)
@@ -366,10 +1284,69 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateScheduleDto'
+              type: object
+              properties:
+                day:
+                  type: string
+                  description: Schedule date (ISO 8601)
+                startTime:
+                  type: string
+                  description: Start time (HH:MM)
+                endTime:
+                  type: string
+                  description: End time (HH:MM)
+                location:
+                  type: string
+                  description: Location
+                notes:
+                  type: string
+                  description: Additional notes
+            example:
+              day: string
+              startTime: string
+              endTime: string
+              location: string
+              notes: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      day:
+                        type: string
+                        description: Schedule date (ISO 8601)
+                      startTime:
+                        type: string
+                        description: Start time (HH:MM)
+                      endTime:
+                        type: string
+                        description: End time (HH:MM)
+                      location:
+                        type: string
+                        description: Location
+                      notes:
+                        type: string
+                        description: Additional notes
+              example:
+                success: true
+                data:
+                  day: string
+                  startTime: string
+                  endTime: string
+                  location: string
+                  notes: string
       security:
         - team-auth: []
       summary: Update event schedule (Admin only)
@@ -391,6 +1368,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - team-auth: []
       summary: Delete event schedule (Admin only)
@@ -408,6 +1402,23 @@ paths:
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - user-auth: []
       summary: Register for an event as solo participant
@@ -425,6 +1436,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - user-auth: []
       summary: Unregister from an event (Authenticated participant)
@@ -459,6 +1487,47 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - {}
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List event participants
       tags:
         - Events
@@ -469,6 +1538,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - user-auth: []
       summary: Get current participant profile
@@ -482,10 +1568,135 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateParticipantDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Full name
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  description: Email address
+                  example: john@example.com
+                username:
+                  type: string
+                  pattern: /^[a-z0-9_]+$/
+                  description: Username (lowercase, numbers, underscores only)
+                  example: john_doe
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Profile image URL
+                phone:
+                  type: string
+                  description: Phone number
+                collegeId:
+                  type: string
+                  description: College ID
+                departmentId:
+                  type: string
+                  description: Department ID
+                collegeIdNo:
+                  type: number
+                  minimum: 1
+                  description: College ID number (roll number)
+                  example: 12345
+                year:
+                  type: string
+                  description: Academic year
+                  example: 3rd Year
+              required:
+                - name
+                - email
+                - username
+                - imageUrl
+                - collegeId
+                - departmentId
+                - collegeIdNo
+            example:
+              name: John Doe
+              email: john@example.com
+              username: john_doe
+              imageUrl: https://example.com/resource
+              collegeId: string
+              departmentId: string
+              collegeIdNo: 12345
+              phone: string
+              year: 3rd Year
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Full name
+                        example: John Doe
+                      email:
+                        type: string
+                        format: email
+                        description: Email address
+                        example: john@example.com
+                      username:
+                        type: string
+                        pattern: /^[a-z0-9_]+$/
+                        description: Username (lowercase, numbers, underscores only)
+                        example: john_doe
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Profile image URL
+                      phone:
+                        type: string
+                        description: Phone number
+                      collegeId:
+                        type: string
+                        description: College ID
+                      departmentId:
+                        type: string
+                        description: Department ID
+                      collegeIdNo:
+                        type: number
+                        minimum: 1
+                        description: College ID number (roll number)
+                        example: 12345
+                      year:
+                        type: string
+                        description: Academic year
+                        example: 3rd Year
+                    required:
+                      - name
+                      - email
+                      - username
+                      - imageUrl
+                      - collegeId
+                      - departmentId
+                      - collegeIdNo
+              example:
+                success: true
+                data:
+                  name: John Doe
+                  email: john@example.com
+                  username: john_doe
+                  imageUrl: https://example.com/resource
+                  collegeId: string
+                  departmentId: string
+                  collegeIdNo: 12345
+                  phone: string
+                  year: 3rd Year
       security:
         - user-auth: []
       summary: Create participant profile
@@ -499,10 +1710,63 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateParticipantDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Full name
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Profile image URL
+                phone:
+                  type: string
+                  description: Phone number
+                year:
+                  type: string
+                  description: Academic year
+            example:
+              name: string
+              imageUrl: https://example.com/resource
+              phone: string
+              year: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Full name
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Profile image URL
+                      phone:
+                        type: string
+                        description: Phone number
+                      year:
+                        type: string
+                        description: Academic year
+              example:
+                success: true
+                data:
+                  name: string
+                  imageUrl: https://example.com/resource
+                  phone: string
+                  year: string
       security:
         - user-auth: []
       summary: Update participant profile
@@ -515,6 +1779,14 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+              example:
+                - {}
       security:
         - user-auth: []
       summary: Get events registered by current participant
@@ -532,6 +1804,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Get participant public profile by ID
       tags:
         - Participants
@@ -544,10 +1833,43 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTeamDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Team name
+                  example: Robo Warriors
+              required:
+                - name
+            example:
+              name: Robo Warriors
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Team name
+                        example: Robo Warriors
+                    required:
+                      - name
+              example:
+                success: true
+                data:
+                  name: Robo Warriors
       security:
         - user-auth: []
       summary: Create a new team (Authenticated participant)
@@ -565,6 +1887,30 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Team name
+                        example: Robo Warriors
+                    required:
+                      - name
+              example:
+                success: true
+                data:
+                  name: Robo Warriors
       summary: Get team by ID with members and registered events
       tags:
         - Teams
@@ -581,10 +1927,37 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateTeamDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Team name
+            example:
+              name: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Team name
+              example:
+                success: true
+                data:
+                  name: string
       security:
         - user-auth: []
       summary: Update team name (Team leader only)
@@ -601,6 +1974,30 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Team name
+                        example: Robo Warriors
+                    required:
+                      - name
+              example:
+                success: true
+                data:
+                  name: Robo Warriors
       security:
         - team-auth: []
         - user-auth: []
@@ -621,10 +2018,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransferLeadershipDto'
+              type: object
+              properties:
+                newLeaderId:
+                  type: string
+                  description: Participant ID to transfer leadership to
+              required:
+                - newLeaderId
+            example:
+              newLeaderId: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      newLeaderId:
+                        type: string
+                        description: Participant ID to transfer leadership to
+                    required:
+                      - newLeaderId
+              example:
+                success: true
+                data:
+                  newLeaderId: string
       security:
         - user-auth: []
       summary: Transfer team leadership to another team member (Current leader only)
@@ -644,10 +2072,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinTeamRequestDto'
+              type: object
+              properties:
+                eventId:
+                  type: string
+                  description: Event ID for this join request
+              required:
+                - eventId
+            example:
+              eventId: string
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                        description: Event ID for this join request
+                    required:
+                      - eventId
+              example:
+                success: true
+                data:
+                  eventId: string
       security:
         - user-auth: []
       summary: Request to join a team for an event (Participant)
@@ -671,6 +2130,14 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+              example:
+                - {}
       security:
         - user-auth: []
       summary: List pending join requests (Team leader only)
@@ -695,10 +2162,57 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewJoinRequestDto'
+              type: object
+              properties:
+                eventId:
+                  type: string
+                  description: Event ID for this join request
+                action:
+                  enum:
+                    - APPROVE
+                    - REJECT
+                  type: string
+                  description: Decision for the participant join request
+              required:
+                - eventId
+                - action
+            example:
+              eventId: string
+              action: APPROVE
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                        description: Event ID for this join request
+                      action:
+                        enum:
+                          - APPROVE
+                          - REJECT
+                        type: string
+                        description: Decision for the participant join request
+                    required:
+                      - eventId
+                      - action
+              example:
+                success: true
+                data:
+                  eventId: string
+                  action: APPROVE
       security:
         - user-auth: []
       summary: Approve or reject a join request (Team leader only)
@@ -721,6 +2235,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - user-auth: []
       summary: Remove member from team (Team leader only)
@@ -780,6 +2311,47 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - {}
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List all club members with filters
       tags:
         - Members
@@ -795,6 +2367,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Get member by ID with positions
       tags:
         - Members
@@ -811,10 +2400,99 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateMemberDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Full name
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Profile image URL
+                phone:
+                  type: string
+                  description: Phone number
+                bio:
+                  type: string
+                  description: Bio
+                graduationYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: Graduation year
+                instagram:
+                  type: string
+                  description: Instagram handle
+                linkedin:
+                  type: string
+                  description: LinkedIn URL
+                github:
+                  type: string
+                  description: GitHub username
+            example:
+              name: string
+              imageUrl: https://example.com/resource
+              phone: string
+              bio: string
+              graduationYear: 2000
+              instagram: string
+              linkedin: string
+              github: string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Full name
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Profile image URL
+                      phone:
+                        type: string
+                        description: Phone number
+                      bio:
+                        type: string
+                        description: Bio
+                      graduationYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: Graduation year
+                      instagram:
+                        type: string
+                        description: Instagram handle
+                      linkedin:
+                        type: string
+                        description: LinkedIn URL
+                      github:
+                        type: string
+                        description: GitHub username
+              example:
+                success: true
+                data:
+                  name: string
+                  imageUrl: https://example.com/resource
+                  phone: string
+                  bio: string
+                  graduationYear: 2000
+                  instagram: string
+                  linkedin: string
+                  github: string
       security:
         - team-auth: []
       summary: Update member profile (Self or Admin)
@@ -831,6 +2509,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - team-auth: []
       summary: Remove member (Admin only)
@@ -848,10 +2543,131 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InviteMemberDto'
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Full name
+                  example: Jane Smith
+                email:
+                  type: string
+                  format: email
+                  description: Email address
+                  example: jane@example.com
+                username:
+                  type: string
+                  pattern: /^[a-z0-9_]+$/
+                  description: Username (lowercase, numbers, underscores only)
+                  example: jane_smith
+                collegeId:
+                  type: string
+                  description: College ID
+                departmentId:
+                  type: string
+                  description: Department ID
+                collegeIdNo:
+                  type: number
+                  minimum: 1
+                  description: College ID number (roll number)
+                  example: 12345
+                graduationYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: Expected graduation year
+                  example: 2025
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Profile image URL
+              required:
+                - name
+                - email
+                - username
+                - collegeId
+                - departmentId
+                - collegeIdNo
+                - imageUrl
+            example:
+              name: Jane Smith
+              email: jane@example.com
+              username: jane_smith
+              collegeId: string
+              departmentId: string
+              collegeIdNo: 12345
+              imageUrl: https://example.com/resource
+              graduationYear: 2025
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Full name
+                        example: Jane Smith
+                      email:
+                        type: string
+                        format: email
+                        description: Email address
+                        example: jane@example.com
+                      username:
+                        type: string
+                        pattern: /^[a-z0-9_]+$/
+                        description: Username (lowercase, numbers, underscores only)
+                        example: jane_smith
+                      collegeId:
+                        type: string
+                        description: College ID
+                      departmentId:
+                        type: string
+                        description: Department ID
+                      collegeIdNo:
+                        type: number
+                        minimum: 1
+                        description: College ID number (roll number)
+                        example: 12345
+                      graduationYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: Expected graduation year
+                        example: 2025
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Profile image URL
+                    required:
+                      - name
+                      - email
+                      - username
+                      - collegeId
+                      - departmentId
+                      - collegeIdNo
+                      - imageUrl
+              example:
+                success: true
+                data:
+                  name: Jane Smith
+                  email: jane@example.com
+                  username: jane_smith
+                  collegeId: string
+                  departmentId: string
+                  collegeIdNo: 12345
+                  imageUrl: https://example.com/resource
+                  graduationYear: 2025
       security:
         - team-auth: []
       summary: Invite a new member (Admin only)
@@ -869,6 +2685,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Get position history for a member
       tags:
         - Positions
@@ -885,10 +2718,115 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePositionDto'
+              type: object
+              properties:
+                position:
+                  type: string
+                  description: Position title
+                  enum:
+                    - CHAIRPERSON
+                    - VICE_CHAIRPERSON
+                    - TREASURER
+                    - TECHNICAL_HEAD
+                    - CODING_HEAD
+                    - LOGISTICS_HEAD
+                    - EXECUTIVE_MEMBER
+                    - MEMBER
+                startMonth:
+                  type: number
+                  minimum: 1
+                  maximum: 12
+                  description: Start month (1-12)
+                  example: 1
+                startYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: Start year
+                  example: 2024
+                endMonth:
+                  type: number
+                  minimum: 1
+                  maximum: 12
+                  description: End month (1-12, null for current)
+                endYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: End year (null for current)
+              required:
+                - position
+                - startMonth
+                - startYear
+            example:
+              position: CHAIRPERSON
+              startMonth: 1
+              startYear: 2024
+              endMonth: 1
+              endYear: 2000
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      position:
+                        type: string
+                        description: Position title
+                        enum:
+                          - CHAIRPERSON
+                          - VICE_CHAIRPERSON
+                          - TREASURER
+                          - TECHNICAL_HEAD
+                          - CODING_HEAD
+                          - LOGISTICS_HEAD
+                          - EXECUTIVE_MEMBER
+                          - MEMBER
+                      startMonth:
+                        type: number
+                        minimum: 1
+                        maximum: 12
+                        description: Start month (1-12)
+                        example: 1
+                      startYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: Start year
+                        example: 2024
+                      endMonth:
+                        type: number
+                        minimum: 1
+                        maximum: 12
+                        description: End month (1-12, null for current)
+                      endYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: End year (null for current)
+                    required:
+                      - position
+                      - startMonth
+                      - startYear
+              example:
+                success: true
+                data:
+                  position: CHAIRPERSON
+                  startMonth: 1
+                  startYear: 2024
+                  endMonth: 1
+                  endYear: 2000
       security:
         - team-auth: []
       summary: Assign position to member (Admin only)
@@ -902,6 +2840,14 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+              example:
+                - {}
       summary: Get current leadership
       tags:
         - Positions
@@ -919,6 +2865,14 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+              example:
+                - {}
       summary: Get leadership by year
       tags:
         - Positions
@@ -936,10 +2890,103 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdatePositionDto'
+              type: object
+              properties:
+                position:
+                  type: string
+                  description: Position title
+                  enum:
+                    - CHAIRPERSON
+                    - VICE_CHAIRPERSON
+                    - TREASURER
+                    - TECHNICAL_HEAD
+                    - CODING_HEAD
+                    - LOGISTICS_HEAD
+                    - EXECUTIVE_MEMBER
+                    - MEMBER
+                startMonth:
+                  type: number
+                  minimum: 1
+                  maximum: 12
+                  description: Start month (1-12)
+                startYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: Start year
+                endMonth:
+                  type: number
+                  minimum: 1
+                  maximum: 12
+                  description: End month (1-12)
+                endYear:
+                  type: number
+                  minimum: 2000
+                  maximum: 2100
+                  description: End year
+            example:
+              position: CHAIRPERSON
+              startMonth: 1
+              startYear: 2000
+              endMonth: 1
+              endYear: 2000
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      position:
+                        type: string
+                        description: Position title
+                        enum:
+                          - CHAIRPERSON
+                          - VICE_CHAIRPERSON
+                          - TREASURER
+                          - TECHNICAL_HEAD
+                          - CODING_HEAD
+                          - LOGISTICS_HEAD
+                          - EXECUTIVE_MEMBER
+                          - MEMBER
+                      startMonth:
+                        type: number
+                        minimum: 1
+                        maximum: 12
+                        description: Start month (1-12)
+                      startYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: Start year
+                      endMonth:
+                        type: number
+                        minimum: 1
+                        maximum: 12
+                        description: End month (1-12)
+                      endYear:
+                        type: number
+                        minimum: 2000
+                        maximum: 2100
+                        description: End year
+              example:
+                success: true
+                data:
+                  position: CHAIRPERSON
+                  startMonth: 1
+                  startYear: 2000
+                  endMonth: 1
+                  endYear: 2000
       security:
         - team-auth: []
       summary: Update position (Admin only)
@@ -956,6 +3003,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - team-auth: []
       summary: Remove position (Admin only)
@@ -1005,6 +3069,90 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title:
+                              type: string
+                              description: Project title
+                              example: Autonomous Robot
+                            description:
+                              type: string
+                              description: Short project description
+                            content:
+                              type: object
+                              description: Rich content (Quill Delta JSON)
+                            contentHtml:
+                              type: string
+                              description: HTML representation of content
+                            imageUrl:
+                              type: string
+                              format: uri
+                              description: Project image URL
+                            githubRepo:
+                              type: string
+                              format: uri
+                              description: GitHub repository URL
+                            demoUrl:
+                              type: string
+                              format: uri
+                              description: Demo/live URL
+                            tags:
+                              description: Project tags
+                              type: array
+                              items:
+                                type: string
+                          required:
+                            - title
+                            - description
+                            - content
+                            - contentHtml
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - title: Autonomous Robot
+                      description: string
+                      content: {}
+                      contentHtml: string
+                      imageUrl: https://example.com/resource
+                      githubRepo: https://example.com/resource
+                      demoUrl: https://example.com/resource
+                      tags:
+                        - string
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List all projects with filters
       tags:
         - Projects
@@ -1016,10 +3164,117 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProjectDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Project title
+                  example: Autonomous Robot
+                description:
+                  type: string
+                  description: Short project description
+                content:
+                  type: object
+                  description: Rich content (Quill Delta JSON)
+                contentHtml:
+                  type: string
+                  description: HTML representation of content
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Project image URL
+                githubRepo:
+                  type: string
+                  format: uri
+                  description: GitHub repository URL
+                demoUrl:
+                  type: string
+                  format: uri
+                  description: Demo/live URL
+                tags:
+                  description: Project tags
+                  type: array
+                  items:
+                    type: string
+              required:
+                - title
+                - description
+                - content
+                - contentHtml
+            example:
+              title: Autonomous Robot
+              description: string
+              content: {}
+              contentHtml: string
+              imageUrl: https://example.com/resource
+              githubRepo: https://example.com/resource
+              demoUrl: https://example.com/resource
+              tags:
+                - string
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Project title
+                        example: Autonomous Robot
+                      description:
+                        type: string
+                        description: Short project description
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Project image URL
+                      githubRepo:
+                        type: string
+                        format: uri
+                        description: GitHub repository URL
+                      demoUrl:
+                        type: string
+                        format: uri
+                        description: Demo/live URL
+                      tags:
+                        description: Project tags
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - title
+                      - description
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Autonomous Robot
+                  description: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: https://example.com/resource
+                  githubRepo: https://example.com/resource
+                  demoUrl: https://example.com/resource
+                  tags:
+                    - string
       security:
         - team-auth: []
       summary: Create a new project (Member only)
@@ -1037,6 +3292,67 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Project title
+                        example: Autonomous Robot
+                      description:
+                        type: string
+                        description: Short project description
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Project image URL
+                      githubRepo:
+                        type: string
+                        format: uri
+                        description: GitHub repository URL
+                      demoUrl:
+                        type: string
+                        format: uri
+                        description: Demo/live URL
+                      tags:
+                        description: Project tags
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - title
+                      - description
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Autonomous Robot
+                  description: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: https://example.com/resource
+                  githubRepo: https://example.com/resource
+                  demoUrl: https://example.com/resource
+                  tags:
+                    - string
       summary: Get project by ID with members
       tags:
         - Projects
@@ -1053,10 +3369,105 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateProjectDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Project title
+                description:
+                  type: string
+                  description: Project description
+                content:
+                  type: object
+                  description: Rich content (Quill Delta JSON)
+                contentHtml:
+                  type: string
+                  description: HTML representation of content
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Project image URL
+                githubRepo:
+                  type: string
+                  format: uri
+                  description: GitHub repository URL
+                demoUrl:
+                  type: string
+                  format: uri
+                  description: Demo/live URL
+                tags:
+                  description: Project tags
+                  type: array
+                  items:
+                    type: string
+            example:
+              title: string
+              description: string
+              content: {}
+              contentHtml: string
+              imageUrl: https://example.com/resource
+              githubRepo: https://example.com/resource
+              demoUrl: https://example.com/resource
+              tags:
+                - string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Project title
+                      description:
+                        type: string
+                        description: Project description
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Project image URL
+                      githubRepo:
+                        type: string
+                        format: uri
+                        description: GitHub repository URL
+                      demoUrl:
+                        type: string
+                        format: uri
+                        description: Demo/live URL
+                      tags:
+                        description: Project tags
+                        type: array
+                        items:
+                          type: string
+              example:
+                success: true
+                data:
+                  title: string
+                  description: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: https://example.com/resource
+                  githubRepo: https://example.com/resource
+                  demoUrl: https://example.com/resource
+                  tags:
+                    - string
       security:
         - team-auth: []
       summary: Update project (Project member only)
@@ -1073,6 +3484,67 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Project title
+                        example: Autonomous Robot
+                      description:
+                        type: string
+                        description: Short project description
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Project image URL
+                      githubRepo:
+                        type: string
+                        format: uri
+                        description: GitHub repository URL
+                      demoUrl:
+                        type: string
+                        format: uri
+                        description: Demo/live URL
+                      tags:
+                        description: Project tags
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - title
+                      - description
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Autonomous Robot
+                  description: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: https://example.com/resource
+                  githubRepo: https://example.com/resource
+                  demoUrl: https://example.com/resource
+                  tags:
+                    - string
       security:
         - team-auth: []
       summary: Delete project (Project creator or Admin only)
@@ -1092,10 +3564,51 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddProjectMemberDto'
+              type: object
+              properties:
+                memberId:
+                  type: string
+                  description: Member ID to add to project
+                role:
+                  type: string
+                  description: Role in project
+                  example: Lead Developer
+              required:
+                - memberId
+            example:
+              memberId: string
+              role: Lead Developer
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      memberId:
+                        type: string
+                        description: Member ID to add to project
+                      role:
+                        type: string
+                        description: Role in project
+                        example: Lead Developer
+                    required:
+                      - memberId
+              example:
+                success: true
+                data:
+                  memberId: string
+                  role: Lead Developer
       security:
         - team-auth: []
       summary: Add member to project (Project member only)
@@ -1118,6 +3631,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       security:
         - team-auth: []
       summary: Remove member from project (Project member only)
@@ -1167,6 +3697,91 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            title:
+                              type: string
+                              description: Blog title
+                              example: Getting Started with Robotics
+                            slug:
+                              type: string
+                              pattern: /^[a-z0-9-]+$/
+                              description: URL slug (auto-generated if not provided)
+                              example: getting-started-robotics
+                            excerpt:
+                              type: string
+                              description: Short excerpt/summary
+                            content:
+                              type: object
+                              description: Rich content (Quill Delta JSON)
+                            contentHtml:
+                              type: string
+                              description: HTML representation of content
+                            coverImage:
+                              type: string
+                              format: uri
+                              description: Cover image URL
+                            tags:
+                              description: Blog tags
+                              type: array
+                              items:
+                                type: string
+                            published:
+                              type: boolean
+                              description: Publish immediately
+                              default: false
+                          required:
+                            - title
+                            - excerpt
+                            - content
+                            - contentHtml
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - title: Getting Started with Robotics
+                      excerpt: string
+                      content: {}
+                      contentHtml: string
+                      slug: getting-started-robotics
+                      coverImage: https://example.com/resource
+                      tags:
+                        - string
+                      published: false
+                  total: 1
+                  limit: 20
+                  offset: 0
       summary: List published blogs with filters
       tags:
         - Blogs
@@ -1178,10 +3793,119 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBlogDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Blog title
+                  example: Getting Started with Robotics
+                slug:
+                  type: string
+                  pattern: /^[a-z0-9-]+$/
+                  description: URL slug (auto-generated if not provided)
+                  example: getting-started-robotics
+                excerpt:
+                  type: string
+                  description: Short excerpt/summary
+                content:
+                  type: object
+                  description: Rich content (Quill Delta JSON)
+                contentHtml:
+                  type: string
+                  description: HTML representation of content
+                coverImage:
+                  type: string
+                  format: uri
+                  description: Cover image URL
+                tags:
+                  description: Blog tags
+                  type: array
+                  items:
+                    type: string
+                published:
+                  type: boolean
+                  description: Publish immediately
+                  default: false
+              required:
+                - title
+                - excerpt
+                - content
+                - contentHtml
+            example:
+              title: Getting Started with Robotics
+              excerpt: string
+              content: {}
+              contentHtml: string
+              slug: getting-started-robotics
+              coverImage: https://example.com/resource
+              tags:
+                - string
+              published: false
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Blog title
+                        example: Getting Started with Robotics
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: getting-started-robotics
+                      excerpt:
+                        type: string
+                        description: Short excerpt/summary
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      coverImage:
+                        type: string
+                        format: uri
+                        description: Cover image URL
+                      tags:
+                        description: Blog tags
+                        type: array
+                        items:
+                          type: string
+                      published:
+                        type: boolean
+                        description: Publish immediately
+                        default: false
+                    required:
+                      - title
+                      - excerpt
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Getting Started with Robotics
+                  excerpt: string
+                  content: {}
+                  contentHtml: string
+                  slug: getting-started-robotics
+                  coverImage: https://example.com/resource
+                  tags:
+                    - string
+                  published: false
       security:
         - team-auth: []
       summary: Create a new blog post (Member only)
@@ -1199,6 +3923,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Get published blog by slug
       tags:
         - Blogs
@@ -1214,6 +3955,68 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Blog title
+                        example: Getting Started with Robotics
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: getting-started-robotics
+                      excerpt:
+                        type: string
+                        description: Short excerpt/summary
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      coverImage:
+                        type: string
+                        format: uri
+                        description: Cover image URL
+                      tags:
+                        description: Blog tags
+                        type: array
+                        items:
+                          type: string
+                      published:
+                        type: boolean
+                        description: Publish immediately
+                        default: false
+                    required:
+                      - title
+                      - excerpt
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Getting Started with Robotics
+                  excerpt: string
+                  content: {}
+                  contentHtml: string
+                  slug: getting-started-robotics
+                  coverImage: https://example.com/resource
+                  tags:
+                    - string
+                  published: false
       security:
         - team-auth: []
       summary: Get blog by ID (includes unpublished for author/admin)
@@ -1232,10 +4035,95 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateBlogDto'
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Blog title
+                slug:
+                  type: string
+                  pattern: /^[a-z0-9-]+$/
+                  description: URL slug
+                excerpt:
+                  type: string
+                  description: Short excerpt/summary
+                content:
+                  type: object
+                  description: Rich content (Quill Delta JSON)
+                contentHtml:
+                  type: string
+                  description: HTML representation of content
+                coverImage:
+                  type: string
+                  format: uri
+                  description: Cover image URL
+                tags:
+                  description: Blog tags
+                  type: array
+                  items:
+                    type: string
+            example:
+              title: string
+              slug: string
+              excerpt: string
+              content: {}
+              contentHtml: string
+              coverImage: https://example.com/resource
+              tags:
+                - string
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Blog title
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug
+                      excerpt:
+                        type: string
+                        description: Short excerpt/summary
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      coverImage:
+                        type: string
+                        format: uri
+                        description: Cover image URL
+                      tags:
+                        description: Blog tags
+                        type: array
+                        items:
+                          type: string
+              example:
+                success: true
+                data:
+                  title: string
+                  slug: string
+                  excerpt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: https://example.com/resource
+                  tags:
+                    - string
       security:
         - team-auth: []
       summary: Update blog post (Author or Admin only)
@@ -1252,6 +4140,68 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Blog title
+                        example: Getting Started with Robotics
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: getting-started-robotics
+                      excerpt:
+                        type: string
+                        description: Short excerpt/summary
+                      content:
+                        type: object
+                        description: Rich content (Quill Delta JSON)
+                      contentHtml:
+                        type: string
+                        description: HTML representation of content
+                      coverImage:
+                        type: string
+                        format: uri
+                        description: Cover image URL
+                      tags:
+                        description: Blog tags
+                        type: array
+                        items:
+                          type: string
+                      published:
+                        type: boolean
+                        description: Publish immediately
+                        default: false
+                    required:
+                      - title
+                      - excerpt
+                      - content
+                      - contentHtml
+              example:
+                success: true
+                data:
+                  title: Getting Started with Robotics
+                  excerpt: string
+                  content: {}
+                  contentHtml: string
+                  slug: getting-started-robotics
+                  coverImage: https://example.com/resource
+                  tags:
+                    - string
+                  published: false
       security:
         - team-auth: []
       summary: Delete blog post (Author or Admin only)
@@ -1271,10 +4221,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PublishBlogDto'
+              type: object
+              properties:
+                published:
+                  type: boolean
+                  description: Publish status (true=publish, false=unpublish)
+              required:
+                - published
+            example:
+              published: true
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      published:
+                        type: boolean
+                        description: Publish status (true=publish, false=unpublish)
+                    required:
+                      - published
+              example:
+                success: true
+                data:
+                  published: true
       security:
         - team-auth: []
       summary: Publish/unpublish blog post (Author or Admin only)
@@ -1297,6 +4278,11 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
       summary: Download certificate PDF for participant (rate limited)
       tags:
         - Certificates
@@ -1307,6 +4293,26 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+              example:
+                success: true
+                data:
+                  - {}
       security:
         - user-auth: []
       summary: Get list of certificates for authenticated participant
@@ -1321,10 +4327,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BulkGenerateCertificatesDto'
+              type: object
+              properties:
+                eventId:
+                  type: string
+                  description: Event ID to generate certificates for
+              required:
+                - eventId
+            example:
+              eventId: string
       responses:
         '201':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                        description: Event ID to generate certificates for
+                    required:
+                      - eventId
+              example:
+                success: true
+                data:
+                  eventId: string
       security:
         - team-auth: []
       summary: Bulk generate certificates for all event participants (Admin only)
@@ -1356,6 +4393,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Handle participant Clerk webhook events
       tags:
         - Webhooks
@@ -1385,6 +4439,23 @@ paths:
       responses:
         '200':
           description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
       summary: Handle team/member Clerk webhook events
       tags:
         - Webhooks
@@ -1431,588 +4502,3 @@ components:
       bearerFormat: JWT
       type: http
       description: Clerk JWT token for club members/admins
-  schemas:
-    CreateCollegeDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: College name
-          example: MIT
-        code:
-          type: string
-          description: College code
-          example: MIT001
-        location:
-          type: string
-          description: College location
-          example: Cambridge, MA
-      required:
-        - name
-        - code
-    UpdateCollegeDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: College name
-        code:
-          type: string
-          description: College code
-        location:
-          type: string
-          description: College location
-    CreateDepartmentDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Department name
-          example: Computer Science
-        code:
-          type: string
-          description: Department code
-          example: CS
-        collegeId:
-          type: string
-          description: College ID this department belongs to
-      required:
-        - name
-        - code
-        - collegeId
-    UpdateDepartmentDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Department name
-        code:
-          type: string
-          description: Department code
-    CreateEventDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Event title
-          example: Robotics Workshop 2024
-        description:
-          type: string
-          description: Event description
-        eventType:
-          type: string
-          description: Event type
-          enum:
-            - INDUCTION
-            - WORKSHOP
-            - COMPETITION
-            - SEMINAR
-            - HACKATHON
-            - MEETUP
-            - OTHER
-        hasTeam:
-          type: boolean
-          description: Whether this is a team-based event
-          default: false
-        maxTeamMembers:
-          type: number
-          description: Maximum team members (required if hasTeam is true)
-          minimum: 2
-        maxParticipants:
-          type: number
-          description: Maximum participants allowed
-          minimum: 1
-        registrationDeadline:
-          type: string
-          description: Registration deadline (ISO 8601 date)
-          example: '2024-12-31T23:59:59Z'
-      required:
-        - title
-        - description
-        - eventType
-        - registrationDeadline
-    UpdateEventDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Event title
-        description:
-          type: string
-          description: Event description
-        eventType:
-          type: string
-          description: Event type
-          enum:
-            - INDUCTION
-            - WORKSHOP
-            - COMPETITION
-            - SEMINAR
-            - HACKATHON
-            - MEETUP
-            - OTHER
-        hasTeam:
-          type: boolean
-          description: Whether this is a team-based event
-        maxTeamMembers:
-          type: number
-          description: Maximum team members
-          minimum: 2
-        maxParticipants:
-          type: number
-          description: Maximum participants
-          minimum: 1
-        registrationDeadline:
-          type: string
-          description: Registration deadline (ISO 8601 date)
-    CreateScheduleDto:
-      type: object
-      properties:
-        day:
-          type: string
-          description: Schedule date (ISO 8601)
-          example: '2024-12-01'
-        startTime:
-          type: string
-          description: Start time (HH:MM)
-          example: '09:00'
-        endTime:
-          type: string
-          description: End time (HH:MM)
-          example: '17:00'
-        location:
-          type: string
-          description: Location
-          example: Main Auditorium
-        notes:
-          type: string
-          description: Additional notes
-      required:
-        - day
-        - startTime
-        - endTime
-        - location
-    UpdateScheduleDto:
-      type: object
-      properties:
-        day:
-          type: string
-          description: Schedule date (ISO 8601)
-        startTime:
-          type: string
-          description: Start time (HH:MM)
-        endTime:
-          type: string
-          description: End time (HH:MM)
-        location:
-          type: string
-          description: Location
-        notes:
-          type: string
-          description: Additional notes
-    CreateParticipantDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Full name
-          example: John Doe
-        email:
-          type: string
-          description: Email address
-          example: john@example.com
-        username:
-          type: string
-          description: Username (lowercase, numbers, underscores only)
-          example: john_doe
-        imageUrl:
-          type: string
-          description: Profile image URL
-        phone:
-          type: string
-          description: Phone number
-        collegeId:
-          type: string
-          description: College ID
-        departmentId:
-          type: string
-          description: Department ID
-        collegeIdNo:
-          type: number
-          description: College ID number (roll number)
-          example: 12345
-        year:
-          type: string
-          description: Academic year
-          example: 3rd Year
-      required:
-        - name
-        - email
-        - username
-        - imageUrl
-        - collegeId
-        - departmentId
-        - collegeIdNo
-    UpdateParticipantDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Full name
-        imageUrl:
-          type: string
-          description: Profile image URL
-        phone:
-          type: string
-          description: Phone number
-        year:
-          type: string
-          description: Academic year
-    CreateTeamDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Team name
-          example: Robo Warriors
-      required:
-        - name
-    UpdateTeamDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Team name
-    TransferLeadershipDto:
-      type: object
-      properties:
-        newLeaderId:
-          type: string
-          description: Participant ID to transfer leadership to
-      required:
-        - newLeaderId
-    JoinTeamRequestDto:
-      type: object
-      properties:
-        eventId:
-          type: string
-          description: Event ID for this join request
-      required:
-        - eventId
-    ReviewJoinRequestDto:
-      type: object
-      properties:
-        eventId:
-          type: string
-          description: Event ID for this join request
-        action:
-          type: string
-          description: Decision for the participant join request
-          enum:
-            - APPROVE
-            - REJECT
-      required:
-        - eventId
-        - action
-    InviteMemberDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Full name
-          example: Jane Smith
-        email:
-          type: string
-          description: Email address
-          example: jane@example.com
-        username:
-          type: string
-          description: Username (lowercase, numbers, underscores only)
-          example: jane_smith
-        collegeId:
-          type: string
-          description: College ID
-        departmentId:
-          type: string
-          description: Department ID
-        collegeIdNo:
-          type: number
-          description: College ID number (roll number)
-          example: 12345
-        graduationYear:
-          type: number
-          description: Expected graduation year
-          example: 2025
-          minimum: 2000
-          maximum: 2100
-        imageUrl:
-          type: string
-          description: Profile image URL
-      required:
-        - name
-        - email
-        - username
-        - collegeId
-        - departmentId
-        - collegeIdNo
-        - imageUrl
-    UpdateMemberDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Full name
-        imageUrl:
-          type: string
-          description: Profile image URL
-        phone:
-          type: string
-          description: Phone number
-        bio:
-          type: string
-          description: Bio
-        graduationYear:
-          type: number
-          description: Graduation year
-          minimum: 2000
-          maximum: 2100
-        instagram:
-          type: string
-          description: Instagram handle
-        linkedin:
-          type: string
-          description: LinkedIn URL
-        github:
-          type: string
-          description: GitHub username
-    CreatePositionDto:
-      type: object
-      properties:
-        position:
-          type: string
-          description: Position title
-          enum:
-            - CHAIRPERSON
-            - VICE_CHAIRPERSON
-            - TREASURER
-            - TECHNICAL_HEAD
-            - CODING_HEAD
-            - LOGISTICS_HEAD
-            - EXECUTIVE_MEMBER
-            - MEMBER
-        startMonth:
-          type: number
-          description: Start month (1-12)
-          example: 1
-          minimum: 1
-          maximum: 12
-        startYear:
-          type: number
-          description: Start year
-          example: 2024
-          minimum: 2000
-          maximum: 2100
-        endMonth:
-          type: number
-          description: End month (1-12, null for current)
-          minimum: 1
-          maximum: 12
-        endYear:
-          type: number
-          description: End year (null for current)
-          minimum: 2000
-          maximum: 2100
-      required:
-        - position
-        - startMonth
-        - startYear
-    UpdatePositionDto:
-      type: object
-      properties:
-        position:
-          type: string
-          description: Position title
-          enum:
-            - CHAIRPERSON
-            - VICE_CHAIRPERSON
-            - TREASURER
-            - TECHNICAL_HEAD
-            - CODING_HEAD
-            - LOGISTICS_HEAD
-            - EXECUTIVE_MEMBER
-            - MEMBER
-        startMonth:
-          type: number
-          description: Start month (1-12)
-          minimum: 1
-          maximum: 12
-        startYear:
-          type: number
-          description: Start year
-          minimum: 2000
-          maximum: 2100
-        endMonth:
-          type: number
-          description: End month (1-12)
-          minimum: 1
-          maximum: 12
-        endYear:
-          type: number
-          description: End year
-          minimum: 2000
-          maximum: 2100
-    CreateProjectDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Project title
-          example: Autonomous Robot
-        description:
-          type: string
-          description: Short project description
-        content:
-          type: object
-          description: Rich content (Quill Delta JSON)
-        contentHtml:
-          type: string
-          description: HTML representation of content
-        imageUrl:
-          type: string
-          description: Project image URL
-        githubRepo:
-          type: string
-          description: GitHub repository URL
-        demoUrl:
-          type: string
-          description: Demo/live URL
-        tags:
-          description: Project tags
-          type: array
-          items:
-            type: string
-      required:
-        - title
-        - description
-        - content
-        - contentHtml
-    UpdateProjectDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Project title
-        description:
-          type: string
-          description: Project description
-        content:
-          type: object
-          description: Rich content (Quill Delta JSON)
-        contentHtml:
-          type: string
-          description: HTML representation of content
-        imageUrl:
-          type: string
-          description: Project image URL
-        githubRepo:
-          type: string
-          description: GitHub repository URL
-        demoUrl:
-          type: string
-          description: Demo/live URL
-        tags:
-          description: Project tags
-          type: array
-          items:
-            type: string
-    AddProjectMemberDto:
-      type: object
-      properties:
-        memberId:
-          type: string
-          description: Member ID to add to project
-        role:
-          type: string
-          description: Role in project
-          example: Lead Developer
-      required:
-        - memberId
-    CreateBlogDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Blog title
-          example: Getting Started with Robotics
-        slug:
-          type: string
-          description: URL slug (auto-generated if not provided)
-          example: getting-started-robotics
-        excerpt:
-          type: string
-          description: Short excerpt/summary
-        content:
-          type: object
-          description: Rich content (Quill Delta JSON)
-        contentHtml:
-          type: string
-          description: HTML representation of content
-        coverImage:
-          type: string
-          description: Cover image URL
-        tags:
-          description: Blog tags
-          type: array
-          items:
-            type: string
-        published:
-          type: boolean
-          description: Publish immediately
-          default: false
-      required:
-        - title
-        - excerpt
-        - content
-        - contentHtml
-    UpdateBlogDto:
-      type: object
-      properties:
-        title:
-          type: string
-          description: Blog title
-        slug:
-          type: string
-          description: URL slug
-        excerpt:
-          type: string
-          description: Short excerpt/summary
-        content:
-          type: object
-          description: Rich content (Quill Delta JSON)
-        contentHtml:
-          type: string
-          description: HTML representation of content
-        coverImage:
-          type: string
-          description: Cover image URL
-        tags:
-          description: Blog tags
-          type: array
-          items:
-            type: string
-    PublishBlogDto:
-      type: object
-      properties:
-        published:
-          type: boolean
-          description: Publish status (true=publish, false=unpublish)
-      required:
-        - published
-    BulkGenerateCertificatesDto:
-      type: object
-      properties:
-        eventId:
-          type: string
-          description: Event ID to generate certificates for
-      required:
-        - eventId
