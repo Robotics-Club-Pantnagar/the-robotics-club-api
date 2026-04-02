@@ -189,6 +189,19 @@ export class TeamsService {
       throw new NotFoundException('Team not found');
     }
 
+    const event = await this.prisma.event.findUnique({
+      where: { id: data.eventId },
+      select: { id: true, hasTeam: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (!event.hasTeam) {
+      throw new ConflictException('This event does not support team joining');
+    }
+
     const registration = await this.prisma.eventParticipant.findUnique({
       where: {
         eventId_participantId: {
@@ -344,6 +357,10 @@ export class TeamsService {
       throw new NotFoundException('Join request not found');
     }
 
+    if (!joinRequest.event.hasTeam) {
+      throw new ConflictException('This event does not support team joining');
+    }
+
     if (data.action === ReviewJoinRequestAction.REJECT) {
       const rejectedRequest =
         joinRequest.status === 'REJECTED'
@@ -386,6 +403,24 @@ export class TeamsService {
         throw new ConflictException(
           'Participant is already assigned to another team',
         );
+      }
+
+      if (
+        joinRequest.event.maxTeamMembers &&
+        participantRegistration.teamId !== teamId
+      ) {
+        const teamMemberCount = await tx.eventParticipant.count({
+          where: {
+            eventId: data.eventId,
+            teamId,
+          },
+        });
+
+        if (teamMemberCount >= joinRequest.event.maxTeamMembers) {
+          throw new ConflictException(
+            'Team has reached maximum members for this event',
+          );
+        }
       }
 
       const updatedRegistration =

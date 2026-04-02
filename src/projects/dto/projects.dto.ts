@@ -29,19 +29,19 @@ export class FindProjectsDto extends PaginationDto {
 export class CreateProjectDto {
   @ApiProperty({ description: 'Project title', example: 'Autonomous Robot' })
   @IsString()
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Short project description' })
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiProperty({ description: 'Rich content (Quill Delta JSON)', type: Object })
   @IsObject()
-  content: Record<string, unknown>;
+  content!: Record<string, unknown>;
 
   @ApiProperty({ description: 'HTML representation of content' })
   @IsString()
-  contentHtml: string;
+  contentHtml!: string;
 
   @ApiPropertyOptional({ description: 'Project image URL' })
   @IsOptional()
@@ -114,7 +114,7 @@ export class UpdateProjectDto {
 export class AddProjectMemberDto {
   @ApiProperty({ description: 'Member ID to add to project' })
   @IsString()
-  memberId: string;
+  memberId!: string;
 
   @ApiPropertyOptional({
     description: 'Role in project',

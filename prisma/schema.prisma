@@ -52,6 +52,7 @@ model Event {
   maxTeamMembers       Int?
   maxParticipants      Int?
   registrationDeadline DateTime
+  certificateTemplate  String?            @db.Text // HTML template for certificate generation
   schedule             EventSchedule[] // Each day with its time slot and location
   participants         EventParticipant[]
   teams                EventTeam[]
@@ -135,6 +136,7 @@ model EventParticipant {
   participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
   teamId        String?
   team          Team?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  certificate   String?     // Cloudinary URL of generated certificate
   registeredAt  DateTime    @default(now())
 
   @@unique([eventId, participantId])

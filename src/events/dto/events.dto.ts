@@ -49,15 +49,15 @@ export class CreateEventDto {
     example: 'Robotics Workshop 2024',
   })
   @IsString()
-  title: string;
+  title!: string;
 
   @ApiProperty({ description: 'Event description' })
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiProperty({ description: 'Event type', enum: EventType })
   @IsEnum(EventType)
-  eventType: EventType;
+  eventType!: EventType;
 
   @ApiPropertyOptional({
     description: 'Whether this is a team-based event',
@@ -90,7 +90,7 @@ export class CreateEventDto {
     example: '2024-12-31T23:59:59Z',
   })
   @IsDateString()
-  registrationDeadline: string;
+  registrationDeadline!: string;
 }
 
 export class UpdateEventDto {
@@ -138,19 +138,19 @@ export class CreateScheduleDto {
     example: '2024-12-01',
   })
   @IsDateString()
-  day: string;
+  day!: string;
 
   @ApiProperty({ description: 'Start time (HH:MM)', example: '09:00' })
   @IsString()
-  startTime: string;
+  startTime!: string;
 
   @ApiProperty({ description: 'End time (HH:MM)', example: '17:00' })
   @IsString()
-  endTime: string;
+  endTime!: string;
 
   @ApiProperty({ description: 'Location', example: 'Main Auditorium' })
   @IsString()
-  location: string;
+  location!: string;
 
   @ApiPropertyOptional({ description: 'Additional notes' })
   @IsOptional()

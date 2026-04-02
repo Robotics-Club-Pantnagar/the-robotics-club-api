@@ -15,11 +15,11 @@ export class FindCollegesDto extends PaginationDto {
 export class CreateCollegeDto {
   @ApiProperty({ description: 'College name', example: 'MIT' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'College code', example: 'MIT001' })
   @IsString()
-  code: string;
+  code!: string;
 
   @ApiProperty({
     description: 'College location',

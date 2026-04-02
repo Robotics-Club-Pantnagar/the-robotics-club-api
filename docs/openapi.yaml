@@ -4261,37 +4261,68 @@ paths:
       summary: Publish/unpublish blog post (Author or Admin only)
       tags:
         - Blogs
-  /certificates/event/{eventId}/participant/{collegeIdNo}:
-    get:
-      operationId: CertificatesController_getCertificate
+  /certificates/events/{eventId}/generate:
+    post:
+      description: >-
+        Adds certificate generation jobs to the background queue. Certificates are generated asynchronously and stored
+        in Cloudinary.
+      operationId: CertificatesController_bulkGenerateCertificates
       parameters:
         - name: eventId
           required: true
           in: path
+          description: Event ID
           schema:
             type: string
-        - name: collegeIdNo
-          required: true
-          in: path
-          schema:
-            type: number
       responses:
-        '200':
-          description: ''
+        '202':
+          description: Certificate generation jobs queued
           content:
-            application/pdf:
+            application/json:
               schema:
-                type: string
-                format: binary
-      summary: Download certificate PDF for participant (rate limited)
+                type: object
+                properties:
+                  jobsQueued:
+                    type: number
+                    description: Number of jobs queued
+                  eventId:
+                    type: string
+                    description: Event ID
+                  message:
+                    type: string
+                    description: Status message
+                required:
+                  - jobsQueued
+                  - eventId
+                  - message
+              example:
+                jobsQueued: 1
+                eventId: string
+                message: string
+      security:
+        - team-auth: []
+      summary: Bulk generate certificates for all event participants (Admin only)
       tags:
         - Certificates
-  /certificates/my-certificates:
-    get:
-      operationId: CertificatesController_getMyCertificates
-      parameters: []
+  /certificates/events/{eventId}/reissue/{participantId}:
+    post:
+      description: Only allowed if certificate was already generated. Regenerates using latest template and data.
+      operationId: CertificatesController_reissueCertificate
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+        - name: participantId
+          required: true
+          in: path
+          description: Participant ID
+          schema:
+            type: string
       responses:
-        '200':
+        '202':
           description: ''
           content:
             application/json:
@@ -4305,23 +4336,83 @@ paths:
                     type: boolean
                     example: true
                   data:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: true
+                    type: object
+                    additionalProperties: true
               example:
                 success: true
-                data:
-                  - {}
+                data: {}
       security:
-        - user-auth: []
-      summary: Get list of certificates for authenticated participant
+        - team-auth: []
+      summary: Reissue certificate for a specific participant (Admin only)
       tags:
         - Certificates
-  /certificates/bulk-generate:
-    post:
-      operationId: CertificatesController_bulkGenerate
-      parameters: []
+  /certificates/events/{eventId}/status:
+    get:
+      description: 'Event-scoped status: combines database counts for that event with queue jobs filtered to that event.'
+      operationId: CertificatesController_getCertificateStatus
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Certificate generation status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventId:
+                    type: string
+                    description: Event ID
+                  totalParticipants:
+                    type: number
+                    description: Total participants
+                  certificatesGenerated:
+                    type: number
+                    description: Certificates generated
+                  certificatesPending:
+                    type: number
+                    description: Certificates pending
+                  jobsInQueue:
+                    type: number
+                    description: Jobs in queue
+                  jobsFailed:
+                    type: number
+                    description: Jobs failed
+                required:
+                  - eventId
+                  - totalParticipants
+                  - certificatesGenerated
+                  - certificatesPending
+                  - jobsInQueue
+                  - jobsFailed
+              example:
+                eventId: string
+                totalParticipants: 1
+                certificatesGenerated: 1
+                certificatesPending: 1
+                jobsInQueue: 1
+                jobsFailed: 1
+      security:
+        - team-auth: []
+      summary: Get certificate generation status for an event (Admin only)
+      tags:
+        - Certificates
+  /certificates/events/{eventId}/template:
+    put:
+      description: 'Set custom HTML template with placeholders: {{name}}, {{eventTitle}}, {{date}}, {{college}}, {{department}}'
+      operationId: CertificatesController_updateEventTemplate
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4329,15 +4420,17 @@ paths:
             schema:
               type: object
               properties:
-                eventId:
+                template:
                   type: string
-                  description: Event ID to generate certificates for
+                  description: >-
+                    HTML template for certificate generation. Use placeholders: {{name}}, {{eventTitle}}, {{date}},
+                    {{college}}, {{department}}
               required:
-                - eventId
+                - template
             example:
-              eventId: string
+              template: string
       responses:
-        '201':
+        '200':
           description: ''
           content:
             application/json:
@@ -4353,18 +4446,163 @@ paths:
                   data:
                     type: object
                     properties:
-                      eventId:
+                      template:
                         type: string
-                        description: Event ID to generate certificates for
+                        description: >-
+                          HTML template for certificate generation. Use placeholders: {{name}}, {{eventTitle}},
+                          {{date}}, {{college}}, {{department}}
                     required:
-                      - eventId
+                      - template
               example:
                 success: true
                 data:
-                  eventId: string
+                  template: string
       security:
         - team-auth: []
-      summary: Bulk generate certificates for all event participants (Admin only)
+      summary: Update certificate template for an event (Admin only)
+      tags:
+        - Certificates
+    get:
+      operationId: CertificatesController_getEventTemplate
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - team-auth: []
+      summary: Get certificate template for an event (Admin only)
+      tags:
+        - Certificates
+  /certificates/event/{eventId}/participant/{collegeIdNo}:
+    get:
+      description: Public download endpoint. Certificate must already exist in storage.
+      operationId: CertificatesController_downloadCertificateByCollegeIdNo
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+        - name: collegeIdNo
+          required: true
+          in: path
+          description: Participant college ID number
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Certificate PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+      summary: Download certificate PDF by event and participant college ID
+      tags:
+        - Certificates
+  /certificates/my-certificates:
+    get:
+      description: Returns certificates for past events. If certificate is not generated, isAvailable will be false.
+      operationId: CertificatesController_getMyCertificates
+      parameters: []
+      responses:
+        '200':
+          description: List of participant certificates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    eventId:
+                      type: string
+                      description: Event ID
+                    eventTitle:
+                      type: string
+                      description: Event title
+                    certificateUrl:
+                      type: string
+                      description: Certificate URL (if generated)
+                    isAvailable:
+                      type: boolean
+                      description: Whether certificate is available
+                    downloadUrl:
+                      type: string
+                      description: Download URL
+                  required:
+                    - eventId
+                    - eventTitle
+                    - isAvailable
+              example:
+                - eventId: string
+                  eventTitle: string
+                  isAvailable: true
+                  certificateUrl: string
+                  downloadUrl: string
+      security:
+        - user-auth: []
+      summary: Get list of certificates for authenticated participant
+      tags:
+        - Certificates
+  /certificates/events/{eventId}/my-certificate:
+    get:
+      description: Returns the Cloudinary URL for the participant's certificate if generated
+      operationId: CertificatesController_getMyEventCertificate
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: Event ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - user-auth: []
+      summary: Get certificate URL for a specific event (Participant)
       tags:
         - Certificates
   /webhooks/clerk/user:

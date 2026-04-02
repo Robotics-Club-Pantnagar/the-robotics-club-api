@@ -12,11 +12,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateParticipantDto {
   @ApiProperty({ description: 'Full name', example: 'John Doe' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Email address', example: 'john@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({
     description: 'Username (lowercase, numbers, underscores only)',
@@ -27,11 +27,11 @@ export class CreateParticipantDto {
     message:
       'Username must contain only lowercase letters, numbers, and underscores',
   })
-  username: string;
+  username!: string;
 
   @ApiProperty({ description: 'Profile image URL' })
   @IsUrl()
-  imageUrl: string;
+  imageUrl!: string;
 
   @ApiPropertyOptional({ description: 'Phone number' })
   @IsOptional()
@@ -40,11 +40,11 @@ export class CreateParticipantDto {
 
   @ApiProperty({ description: 'College ID' })
   @IsString()
-  collegeId: string;
+  collegeId!: string;
 
   @ApiProperty({ description: 'Department ID' })
   @IsString()
-  departmentId: string;
+  departmentId!: string;
 
   @ApiProperty({
     description: 'College ID number (roll number)',
@@ -52,7 +52,7 @@ export class CreateParticipantDto {
   })
   @IsInt()
   @IsPositive()
-  collegeIdNo: number;
+  collegeIdNo!: number;
 
   @ApiPropertyOptional({ description: 'Academic year', example: '3rd Year' })
   @IsOptional()

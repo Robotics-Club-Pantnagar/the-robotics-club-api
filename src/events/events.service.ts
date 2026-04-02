@@ -107,6 +107,12 @@ export class EventsService {
       );
     }
 
+    if (data.hasTeam === false && data.maxTeamMembers) {
+      throw new BadRequestException(
+        'maxTeamMembers is only allowed when hasTeam is true',
+      );
+    }
+
     return this.prisma.event.create({
       data: {
         ...rest,
@@ -116,8 +122,24 @@ export class EventsService {
   }
 
   async update(id: string, data: UpdateEventDto) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
     const { registrationDeadline, ...rest } = data;
+
+    const nextHasTeam = data.hasTeam ?? existing.hasTeam;
+    const nextMaxTeamMembers =
+      data.maxTeamMembers ?? existing.maxTeamMembers ?? null;
+
+    if (nextHasTeam && !nextMaxTeamMembers) {
+      throw new BadRequestException(
+        'maxTeamMembers is required when hasTeam is true',
+      );
+    }
+
+    if (!nextHasTeam && nextMaxTeamMembers) {
+      throw new BadRequestException(
+        'maxTeamMembers is only allowed when hasTeam is true',
+      );
+    }
 
     return this.prisma.event.update({
       where: { id },

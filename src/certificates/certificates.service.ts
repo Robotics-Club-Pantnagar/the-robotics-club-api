@@ -1,83 +1,237 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import PDFDocument from 'pdfkit';
-import { PassThrough } from 'stream';
+import { QueueService } from '../queue/queue.service';
+import { TemplateService } from './template.service';
+import {
+  CertificateStatusResponse,
+  MyCertificateResponse,
+  GenerationResultDto,
+} from './dto';
 
 @Injectable()
 export class CertificatesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(CertificatesService.name);
 
-  async getCertificate(
+  constructor(
+    private prisma: PrismaService,
+    private queueService: QueueService,
+    private templateService: TemplateService,
+  ) {}
+
+  /**
+   * Admin: Bulk generate certificates for all event participants
+   */
+  async bulkGenerateCertificates(
     eventId: string,
-    collegeIdNo: number,
-  ): Promise<{ stream: PassThrough; filename: string }> {
-    // Find the participant by collegeIdNo
-    const participant = await this.prisma.participant.findFirst({
-      where: { collegeIdNo },
+  ): Promise<GenerationResultDto> {
+    // Fetch event with template and participants
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
       include: {
-        college: true,
-        department: true,
-      },
-    });
-
-    if (!participant) {
-      throw new NotFoundException('Participant not found');
-    }
-
-    // Verify participant attended the event
-    const registration = await this.prisma.eventParticipant.findUnique({
-      where: {
-        eventId_participantId: { eventId, participantId: participant.id },
-      },
-      include: {
-        event: {
+        schedule: { orderBy: { day: 'asc' } },
+        participants: {
           include: {
-            schedule: { orderBy: { day: 'asc' } },
+            participant: {
+              include: { college: true, department: true },
+            },
           },
         },
       },
     });
 
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    // Use event template or default
+    const template =
+      event.certificateTemplate || this.templateService.getDefaultTemplate();
+
+    // Validate template
+    const validation = this.templateService.validateTemplate(template);
+    if (!validation.valid) {
+      throw new BadRequestException(
+        `Invalid template. Missing required placeholders: ${validation.missingFields.join(', ')}`,
+      );
+    }
+
+    // Check if event has ended (optional - can enable stricter rules)
+    const lastSchedule = event.schedule[event.schedule.length - 1];
+    const now = new Date();
+    if (lastSchedule && new Date(lastSchedule.day) > now) {
+      throw new BadRequestException(
+        'Cannot generate certificates for an event that has not ended yet',
+      );
+    }
+
+    if (event.participants.length === 0) {
+      throw new BadRequestException(
+        'No participants registered for this event',
+      );
+    }
+
+    // Format event dates
+    const eventDates = event.schedule
+      .map((s) =>
+        new Date(s.day).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+      )
+      .join(', ');
+
+    // Filter participants who don't have certificates yet
+    const participantsToProcess = event.participants.filter(
+      (ep) => !ep.certificate,
+    );
+
+    if (participantsToProcess.length === 0) {
+      return {
+        jobsQueued: 0,
+        eventId,
+        message: 'All participants already have certificates',
+      };
+    }
+
+    // Add bulk jobs to queue
+    const result = await this.queueService.addBulkCertificateJobs({
+      eventId,
+      eventTitle: event.title,
+      eventDates,
+      template,
+      participants: participantsToProcess.map((ep) => ({
+        participantId: ep.participantId,
+        eventParticipantId: ep.id,
+        participantName: ep.participant.name,
+        participantEmail: ep.participant.email,
+        collegeName: ep.participant.college.name,
+        departmentName: ep.participant.department.name,
+      })),
+    });
+
+    return {
+      jobsQueued: result.jobCount,
+      eventId: result.eventId,
+      message: `${result.jobCount} certificate generation jobs queued successfully`,
+    };
+  }
+
+  /**
+   * Admin: Reissue certificate for a specific participant
+   */
+  async reissueCertificate(
+    eventId: string,
+    participantId: string,
+  ): Promise<{ message: string; jobId: string }> {
+    // Find the event participant registration
+    const registration = await this.prisma.eventParticipant.findUnique({
+      where: { eventId_participantId: { eventId, participantId } },
+      include: {
+        event: {
+          include: { schedule: { orderBy: { day: 'asc' } } },
+        },
+        participant: {
+          include: { college: true, department: true },
+        },
+      },
+    });
+
     if (!registration) {
-      throw new NotFoundException('Participant did not attend this event');
+      throw new NotFoundException('Participant registration not found');
+    }
+
+    // Reissue is only allowed if certificate already exists
+    if (!registration.certificate) {
+      throw new BadRequestException(
+        'Cannot reissue certificate. Certificate has not been generated yet. Use bulk generation first.',
+      );
     }
 
     const event = registration.event;
-    const eventDates = event.schedule.map((s) =>
-      new Date(s.day).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-    );
+    const template =
+      event.certificateTemplate || this.templateService.getDefaultTemplate();
 
-    // Generate PDF
-    const stream = new PassThrough();
-    const doc = new PDFDocument({
-      size: 'A4',
-      layout: 'landscape',
-      margin: 50,
-    });
+    const eventDates = event.schedule
+      .map((s) =>
+        new Date(s.day).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+      )
+      .join(', ');
 
-    doc.pipe(stream);
-
-    // Certificate design
-    this.generateCertificatePdf(doc, {
-      participantName: participant.name,
+    // Add reissue job to queue
+    const job = await this.queueService.addReissueCertificateJob({
+      eventId,
+      participantId,
+      eventParticipantId: registration.id,
+      participantName: registration.participant.name,
+      participantEmail: registration.participant.email,
+      collegeName: registration.participant.college.name,
+      departmentName: registration.participant.department.name,
       eventTitle: event.title,
-      eventDates: eventDates.join(', '),
-      collegeName: participant.college.name,
-      departmentName: participant.department.name,
+      eventDates,
+      template,
+      isReissue: true,
     });
 
-    doc.end();
-
-    const filename = `certificate_${participant.name.replace(/\s+/g, '_')}_${event.title.replace(/\s+/g, '_')}.pdf`;
-
-    return { stream, filename };
+    return {
+      message: 'Certificate reissue job queued successfully',
+      jobId: job.id || 'unknown',
+    };
   }
 
-  async getMyCertificates(participantId: string) {
+  /**
+   * Get certificate generation status for an event
+   */
+  async getCertificateStatus(
+    eventId: string,
+  ): Promise<CertificateStatusResponse> {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      include: {
+        participants: {
+          select: { id: true, certificate: true },
+        },
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const totalParticipants = event.participants.length;
+    const certificatesGenerated = event.participants.filter(
+      (p) => p.certificate,
+    ).length;
+    const certificatesPending = totalParticipants - certificatesGenerated;
+
+    // Get queue status for this event
+    const queueStatus = await this.queueService.getJobsByEvent(eventId);
+
+    return {
+      eventId,
+      totalParticipants,
+      certificatesGenerated,
+      certificatesPending,
+      jobsInQueue: queueStatus.pending,
+      jobsFailed: queueStatus.failed,
+    };
+  }
+
+  /**
+   * Participant: Get their certificates
+   */
+  async getMyCertificates(
+    participantId: string,
+  ): Promise<MyCertificateResponse[]> {
     const participant = await this.prisma.participant.findUnique({
       where: { id: participantId },
       select: { collegeIdNo: true },
@@ -108,130 +262,163 @@ export class CertificatesService {
     return pastEvents.map((reg) => ({
       eventId: reg.eventId,
       eventTitle: reg.event.title,
-      downloadUrl: `/certificates/event/${reg.eventId}/participant/${participant.collegeIdNo}`,
+      certificateUrl: reg.certificate || undefined,
+      isAvailable: !!reg.certificate,
+      downloadUrl: reg.certificate ? reg.certificate : undefined,
     }));
   }
 
-  async bulkGenerate(eventId: string): Promise<{ count: number }> {
-    const event = await this.prisma.event.findUnique({
-      where: { id: eventId },
+  /**
+   * Get participant's certificate URL for a specific event
+   */
+  async getParticipantCertificate(
+    participantId: string,
+    eventId: string,
+  ): Promise<{ url: string }> {
+    const registration = await this.prisma.eventParticipant.findUnique({
+      where: { eventId_participantId: { eventId, participantId } },
+      select: { certificate: true },
+    });
+
+    if (!registration) {
+      throw new NotFoundException('Participant not registered for this event');
+    }
+
+    if (!registration.certificate) {
+      throw new BadRequestException('Certificate not generated yet');
+    }
+
+    return { url: registration.certificate };
+  }
+
+  /**
+   * Public: Download certificate PDF by event and participant college ID number
+   */
+  async downloadCertificateByCollegeIdNo(
+    eventId: string,
+    collegeIdNo: number,
+  ): Promise<{ fileName: string; content: Buffer }> {
+    const registration = await this.prisma.eventParticipant.findFirst({
+      where: {
+        eventId,
+        participant: {
+          collegeIdNo,
+        },
+      },
       include: {
-        participants: {
-          include: {
-            participant: {
-              include: { college: true, department: true },
-            },
+        event: {
+          select: {
+            title: true,
+          },
+        },
+        participant: {
+          select: {
+            collegeIdNo: true,
           },
         },
       },
+    });
+
+    if (!registration) {
+      throw new NotFoundException(
+        'Participant registration not found for this event',
+      );
+    }
+
+    if (!registration.certificate) {
+      throw new BadRequestException('Certificates not generated yet');
+    }
+
+    let downloadResponse: Awaited<ReturnType<typeof fetch>>;
+    try {
+      downloadResponse = await fetch(registration.certificate);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to fetch certificate from storage: ${message}`);
+      throw new BadRequestException('Unable to download certificate');
+    }
+
+    if (!downloadResponse.ok) {
+      throw new BadRequestException('Unable to download certificate');
+    }
+
+    const content = Buffer.from(await downloadResponse.arrayBuffer());
+    if (content.length === 0) {
+      throw new BadRequestException('Certificate file is empty');
+    }
+
+    const safeEventTitle = this.sanitizeForFileName(registration.event.title);
+    const fileName = `${safeEventTitle}-${registration.participant.collegeIdNo}.pdf`;
+
+    return {
+      fileName,
+      content,
+    };
+  }
+
+  /**
+   * Admin: Update certificate template for an event
+   */
+  async updateEventTemplate(
+    eventId: string,
+    template: string,
+  ): Promise<{ message: string }> {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
     });
 
     if (!event) {
       throw new NotFoundException('Event not found');
     }
 
-    // In a real implementation, this would:
-    // 1. Generate PDFs for all participants
-    // 2. Store them in cloud storage
-    // 3. Send notification emails
-    // For now, we just return the count
+    // Validate template
+    const validation = this.templateService.validateTemplate(template);
+    if (!validation.valid) {
+      throw new BadRequestException(
+        `Invalid template. Missing required placeholders: ${validation.missingFields.join(', ')}`,
+      );
+    }
 
-    return { count: event.participants.length };
+    await this.prisma.event.update({
+      where: { id: eventId },
+      data: { certificateTemplate: template },
+    });
+
+    return { message: 'Certificate template updated successfully' };
   }
 
-  private generateCertificatePdf(
-    doc: PDFKit.PDFDocument,
-    data: {
-      participantName: string;
-      eventTitle: string;
-      eventDates: string;
-      collegeName: string;
-      departmentName: string;
-    },
-  ) {
-    const pageWidth = doc.page.width;
-    const pageHeight = doc.page.height;
-
-    // Border
-    doc
-      .rect(30, 30, pageWidth - 60, pageHeight - 60)
-      .lineWidth(3)
-      .stroke('#1a365d');
-
-    doc
-      .rect(40, 40, pageWidth - 80, pageHeight - 80)
-      .lineWidth(1)
-      .stroke('#2c5282');
-
-    // Title
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(40)
-      .fillColor('#1a365d')
-      .text('CERTIFICATE', 0, 80, { align: 'center' });
-
-    doc
-      .font('Helvetica')
-      .fontSize(20)
-      .fillColor('#4a5568')
-      .text('OF PARTICIPATION', 0, 130, { align: 'center' });
-
-    // Subtitle
-    doc
-      .fontSize(14)
-      .fillColor('#718096')
-      .text('This is to certify that', 0, 180, { align: 'center' });
-
-    // Participant name
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(32)
-      .fillColor('#2d3748')
-      .text(data.participantName, 0, 210, { align: 'center' });
-
-    // College info
-    doc
-      .font('Helvetica')
-      .fontSize(14)
-      .fillColor('#718096')
-      .text(`${data.collegeName} - ${data.departmentName}`, 0, 260, {
-        align: 'center',
-      });
-
-    // Event participation text
-    doc
-      .fontSize(14)
-      .fillColor('#718096')
-      .text('has successfully participated in', 0, 300, { align: 'center' });
-
-    // Event title
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(26)
-      .fillColor('#2c5282')
-      .text(data.eventTitle, 0, 330, { align: 'center' });
-
-    // Date
-    doc
-      .font('Helvetica')
-      .fontSize(14)
-      .fillColor('#718096')
-      .text(`held on ${data.eventDates}`, 0, 375, { align: 'center' });
-
-    // Footer - Organization name
-    doc
-      .fontSize(16)
-      .fillColor('#1a365d')
-      .text('The Robotics Club', 0, 450, { align: 'center' });
-
-    // Date issued
-    const today = new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+  /**
+   * Get event's certificate template
+   */
+  async getEventTemplate(eventId: string): Promise<{
+    template: string;
+    isDefault: boolean;
+    placeholders: string[];
+  }> {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: { certificateTemplate: true },
     });
-    doc.fontSize(10).fillColor('#a0aec0').text(`Issued on ${today}`, 0, 480, {
-      align: 'center',
-    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const template =
+      event.certificateTemplate || this.templateService.getDefaultTemplate();
+    const isDefault = !event.certificateTemplate;
+    const placeholders = this.templateService.extractPlaceholders(template);
+
+    return { template, isDefault, placeholders };
+  }
+
+  private sanitizeForFileName(value: string): string {
+    const sanitized = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
+
+    return sanitized || 'certificate';
   }
 }

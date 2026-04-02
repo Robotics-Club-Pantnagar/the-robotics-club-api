@@ -6,7 +6,7 @@ import { Position } from '../../generated/prisma/client';
 export class CreatePositionDto {
   @ApiProperty({ description: 'Position title', enum: Position })
   @IsEnum(Position)
-  position: Position;
+  position!: Position;
 
   @ApiProperty({
     description: 'Start month (1-12)',
@@ -17,7 +17,7 @@ export class CreatePositionDto {
   @IsInt()
   @Min(1)
   @Max(12)
-  startMonth: number;
+  startMonth!: number;
 
   @ApiProperty({
     description: 'Start year',
@@ -28,7 +28,7 @@ export class CreatePositionDto {
   @IsInt()
   @Min(2000)
   @Max(2100)
-  startYear: number;
+  startYear!: number;
 
   @ApiPropertyOptional({
     description: 'End month (1-12, null for current)',

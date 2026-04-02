@@ -44,11 +44,11 @@ export class FindMembersDto extends PaginationDto {
 export class InviteMemberDto {
   @ApiProperty({ description: 'Full name', example: 'Jane Smith' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Email address', example: 'jane@example.com' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({
     description: 'Username (lowercase, numbers, underscores only)',
@@ -59,15 +59,15 @@ export class InviteMemberDto {
     message:
       'Username must contain only lowercase letters, numbers, and underscores',
   })
-  username: string;
+  username!: string;
 
   @ApiProperty({ description: 'College ID' })
   @IsString()
-  collegeId: string;
+  collegeId!: string;
 
   @ApiProperty({ description: 'Department ID' })
   @IsString()
-  departmentId: string;
+  departmentId!: string;
 
   @ApiProperty({
     description: 'College ID number (roll number)',
@@ -75,7 +75,7 @@ export class InviteMemberDto {
   })
   @IsInt()
   @IsPositive()
-  collegeIdNo: number;
+  collegeIdNo!: number;
 
   @ApiPropertyOptional({
     description: 'Expected graduation year',
@@ -91,7 +91,7 @@ export class InviteMemberDto {
 
   @ApiProperty({ description: 'Profile image URL' })
   @IsUrl()
-  imageUrl: string;
+  imageUrl!: string;
 }
 
 export class UpdateMemberDto {

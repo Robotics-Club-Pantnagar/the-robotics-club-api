@@ -61,3 +61,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 docs/.openapi.hash
 requirements.md
 openapi.md
+pdf_generation.md

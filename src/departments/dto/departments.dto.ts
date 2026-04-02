@@ -4,15 +4,15 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateDepartmentDto {
   @ApiProperty({ description: 'Department name', example: 'Computer Science' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Department code', example: 'CS' })
   @IsString()
-  code: string;
+  code!: string;
 
   @ApiProperty({ description: 'College ID this department belongs to' })
   @IsString()
-  collegeId: string;
+  collegeId!: string;
 }
 
 export class UpdateDepartmentDto {

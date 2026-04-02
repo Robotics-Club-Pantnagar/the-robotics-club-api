@@ -1,102 +1,221 @@
 # The Robotics Club API
 
-Backend API for a college club/society platform built with NestJS, Prisma, PostgreSQL, and Clerk.
+NestJS backend for a college club/society management platform.
 
-## Overview
+This project implements modules for colleges, departments, events, participants, teams, members, positions, projects, blogs, certificates, and Clerk webhooks.
 
-This API manages:
-- Colleges and departments
-- Events, schedules, and registrations
-- Teams and team join requests
-- Members and positions
-- Projects and blogs
-- Certificates
-- Clerk webhooks for identity linking
+## Requirement Alignment
 
-No global /api prefix is used.
+This codebase follows [requirements.md](requirements.md) with certificate behavior overridden by [pdf_generation.md](pdf_generation.md) where conflicts exist.
 
-## API Documentation
+Implemented global rules:
+- No global `/api` prefix.
+- Global `ValidationPipe` with `whitelist: true` and `transform: true`.
+- Unified success/error response shape via global interceptor/filters.
+- Default pagination of `limit=20` and `offset=0`.
+- Global rate limiting enabled with `@nestjs/throttler`.
+- Extra throttling on public certificate download endpoint.
 
-Generated OpenAPI YAML:
-- [docs/openapi.yaml](docs/openapi.yaml)
+## Tech Stack
 
-Regenerate docs on demand:
-
-```bash
-npm run generate:api-docs
-```
-
-The docs generator uses hash-based change detection in docs/.openapi.hash and skips writing when there are no API structure changes.
+- NestJS 11
+- Prisma ORM + PostgreSQL
+- Clerk (dual instance auth)
+- BullMQ + Redis (background certificate jobs)
+- Cloudinary (certificate storage)
+- PDFKit (PDF generation)
 
 ## Authentication Model
 
 Two Clerk instances are used:
-- Participant instance (external users)
-- Team/member instance (club members and admins)
+- Participant instance (`CLERK_USER_SECRET_KEY`): external users registering for events.
+- Team/member instance (`CLERK_TEAM_SECRET_KEY`): club members and admins.
 
-Guards are applied via the existing auth module and decorators.
+Primary decorators used in routes:
+- `@UserAuth()` for participant-protected routes
+- `@TeamMember()` for member routes
+- `@TeamAdmin()` for admin-only routes
+- `@UseGuards(UserOrTeamAdminGuard)` where leader/admin dual access is needed
 
-## Team Join Request Model
+## API Surface (Key Routes)
 
-Team joining is managed through a dedicated join-request table: team_join_requests.
+### Colleges
+- `GET /colleges`
+- `GET /colleges/:id`
+- `POST /colleges` (admin)
+- `PATCH /colleges/:id` (admin)
+- `DELETE /colleges/:id` (admin)
+- `GET /colleges/:collegeId/departments`
 
-Flow:
-1. Participant registers solo for an event using POST /events/:id/register.
-2. Participant requests team join using POST /teams/:id/join-request with eventId.
-3. Request is stored in team_join_requests with status PENDING.
-4. Team leader reviews using PATCH /teams/:id/join-requests/:participantId.
-5. Approve assigns participant to team and clears join requests for that participant/event.
-6. Reject marks the request REJECTED and blocks same-team re-request by the participant.
+### Departments
+- `GET /departments/:id`
+- `POST /departments` (admin)
+- `PATCH /departments/:id` (admin)
+- `DELETE /departments/:id` (admin)
 
-There is no EventParticipant status field in this implementation.
+### Events
+- `GET /events`
+- `GET /events/:id`
+- `POST /events` (admin)
+- `PATCH /events/:id` (admin)
+- `DELETE /events/:id` (admin)
+- `POST /events/:id/schedules` (admin)
+- `PATCH /events/:eventId/schedules/:scheduleId` (admin)
+- `DELETE /events/:eventId/schedules/:scheduleId` (admin)
+- `POST /events/:id/register` (participant, solo registration)
+- `DELETE /events/:id/unregister` (participant)
+- `GET /events/:id/participants`
 
-## Webhooks
+### Participants
+- `GET /participants/me`
+- `POST /participants/me`
+- `PATCH /participants/me`
+- `GET /participants/me/events`
+- `GET /participants/:id`
 
-Separate webhook endpoints are exposed:
-- POST /webhooks/clerk/user
-  - Participant Clerk instance webhook
-  - Links Clerk user id to Participant by email
-- POST /webhooks/clerk/team
-  - Team/member Clerk instance webhook
-  - Links Clerk user id to Member by email
+### Teams
+- `POST /teams` (participant)
+- `GET /teams/:id`
+- `PATCH /teams/:id` (team leader)
+- `DELETE /teams/:id` (team leader or admin)
+- `PATCH /teams/:id/leader` (team leader)
+- `DELETE /teams/:id/members/:participantId` (team leader)
+- `POST /teams/:id/join-request` (participant)
+- `GET /teams/:id/join-requests` (team leader)
+- `PATCH /teams/:id/join-requests/:participantId` (team leader)
 
-Supported events:
-- user.created
-- user.updated
+### Certificates
+- `POST /certificates/bulk-generate` (admin, requirements-compatible)
+- `POST /certificates/events/:eventId/generate` (admin, existing route retained)
+- `POST /certificates/events/:eventId/reissue/:participantId` (admin)
+- `GET /certificates/event/:eventId/participant/:collegeIdNo` (public PDF download)
+- `GET /certificates/my-certificates` (participant)
+- `GET /certificates/events/:eventId/my-certificate` (participant)
 
-Signature verification uses Svix headers and endpoint-specific webhook secrets.
+Additional admin utility routes are available for template management and event-scoped generation status.
+
+
+### Members and Invitations
+- `POST /members/invite` (admin)
+- Clerk webhook acceptance links Clerk user IDs to existing records.
+
+### Webhooks
+- `POST /webhooks/clerk/user`
+- `POST /webhooks/clerk/team`
+
+Supported webhook events:
+- `user.created`
+- `user.updated`
+
+Secrets:
+- `CLERK_USER_WEBHOOK_SECRET`
+- `CLERK_TEAM_WEBHOOK_SECRET`
+- Optional fallback: `CLERK_WEBHOOK_SECRET`
+
+## Certificate Generation (pdf_generation.md precedence)
+
+Implemented behavior:
+- Admin-triggered bulk generation only.
+- Generation always runs in background jobs (BullMQ worker).
+- Certificates are uploaded to Cloudinary and URL is stored in `EventParticipant.certificate`.
+- Reissue is allowed only when a certificate already exists.
+- Participant endpoints only fetch existing certificates.
+- Worker parses template placeholders before PDF generation.
+
+Operational requirement:
+- Deploy backend and worker on a persistent platform (not serverless-only execution model).
+
+## Team Join Request Rules
+
+Implemented rules:
+- Participant must register solo first.
+- Only one active `PENDING` request per participant/event.
+- `REJECTED` request to same team/event cannot be recreated.
+- Team leader can still approve the previously rejected request row later.
+- On approval: assign `EventParticipant.teamId`, then clear participant requests for that event.
+
+## Response Shape
+
+Success response:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+Paginated response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "items": [],
+    "total": 0,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+Error response:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "...",
+    "details": {}
+  }
+}
+```
+
+## Prerequisites
+
+- Node.js 18+
+- PostgreSQL
+- Redis
+- Cloudinary account
 
 ## Environment Variables
 
 Required:
-- DATABASE_URL
-- CLERK_USER_SECRET_KEY
-- CLERK_TEAM_SECRET_KEY
-- CLERK_USER_WEBHOOK_SECRET (or CLERK_WEBHOOK_SECRET fallback)
-- CLERK_TEAM_WEBHOOK_SECRET (or CLERK_WEBHOOK_SECRET fallback)
 
-Common optional:
-- CLERK_MEMBER_REDIRECT_URL
-- PORT
-- NODE_ENV
-- AIVEN_CA_B64
+```env
+DATABASE_URL=postgresql://...
 
-## Setup
+CLERK_USER_SECRET_KEY=sk_...
+CLERK_TEAM_SECRET_KEY=sk_...
+CLERK_USER_WEBHOOK_SECRET=whsec_...
+CLERK_TEAM_WEBHOOK_SECRET=whsec_...
 
-Install dependencies:
+REDIS_URL=redis://...
+# or REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
+
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+```
+
+Optional:
+
+```env
+CLERK_WEBHOOK_SECRET=whsec_... # fallback for both webhook endpoints
+CLERK_MEMBER_REDIRECT_URL=https://...
+PORT=3000
+NODE_ENV=development
+AIVEN_CA_B64=...
+```
+
+## Local Setup
 
 ```bash
 npm install
 ```
 
-Apply migrations and generate Prisma client:
-
-```bash
-npx prisma migrate deploy
-npx prisma generate
-```
-
-Run the development server:
+Run development server:
 
 ```bash
 npm run start:dev
@@ -104,24 +223,35 @@ npm run start:dev
 
 ## Scripts
 
-- npm run start:dev
-- npm run build
-- npm run lint
-- npm run test
-- npm run generate:api-docs
+- `npm run format` - Prettier format
+- `npm run lint` - ESLint (with `--fix`)
+- `npm run build` - `prisma migrate deploy && prisma generate && nest build`
+- `npm test` - unit tests
+- `npm run test:e2e` - e2e tests
+- `npm run generate:api-docs` - generate [docs/openapi.yaml](docs/openapi.yaml)
 
-## Quality and Safety
+## Verification Workflow
 
-- Global validation pipe
-- Global rate limiting
-- Prisma and HTTP exception filters with unified error shape
-- HTML sanitization for rich content fields
-- Certificate endpoint throttling
+Recommended validation sequence:
 
-## Current Verification Status
+```bash
+npm run format
+npm run lint
+npm run build
+npm test
+npm run generate:api-docs
+```
 
-After the latest updates:
-- Lint passes
-- Build passes
-- Tests pass
-- OpenAPI generation passes
+## OpenAPI
+
+Generated OpenAPI spec:
+- [docs/openapi.yaml](docs/openapi.yaml)
+
+Generation script:
+- [src/scripts/generate-docs.ts](src/scripts/generate-docs.ts)
+
+## Notes
+
+- Build uses `prisma migrate deploy`; ensure `DATABASE_URL` is reachable before running build.
+- Certificate download endpoint returns `application/pdf` with `Content-Disposition` header.
+- Run build/lint/tests/docs generation before release.

@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateTeamDto {
   @ApiProperty({ description: 'Team name', example: 'Robo Warriors' })
   @IsString()
-  name: string;
+  name!: string;
 }
 
 export class UpdateTeamDto {
@@ -17,7 +17,7 @@ export class UpdateTeamDto {
 export class JoinTeamRequestDto {
   @ApiProperty({ description: 'Event ID for this join request' })
   @IsString()
-  eventId: string;
+  eventId!: string;
 }
 
 export class ListJoinRequestsDto {
@@ -37,18 +37,18 @@ export enum ReviewJoinRequestAction {
 export class ReviewJoinRequestDto {
   @ApiProperty({ description: 'Event ID for this join request' })
   @IsString()
-  eventId: string;
+  eventId!: string;
 
   @ApiProperty({
     description: 'Decision for the participant join request',
     enum: ReviewJoinRequestAction,
   })
   @IsEnum(ReviewJoinRequestAction)
-  action: ReviewJoinRequestAction;
+  action!: ReviewJoinRequestAction;
 }
 
 export class TransferLeadershipDto {
   @ApiProperty({ description: 'Participant ID to transfer leadership to' })
   @IsString()
-  newLeaderId: string;
+  newLeaderId!: string;
 }

@@ -8,5 +8,5 @@ export class InviteClerkDto {
     description: 'The email address of the user to invite as a clerk',
     example: 'new.clerk@example.com',
   })
-  email: string;
+  email!: string;
 }

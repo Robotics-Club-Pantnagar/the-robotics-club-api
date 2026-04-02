@@ -34,7 +34,7 @@ export class CreateBlogDto {
     example: 'Getting Started with Robotics',
   })
   @IsString()
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({
     description: 'URL slug (auto-generated if not provided)',
@@ -49,15 +49,15 @@ export class CreateBlogDto {
 
   @ApiProperty({ description: 'Short excerpt/summary' })
   @IsString()
-  excerpt: string;
+  excerpt!: string;
 
   @ApiProperty({ description: 'Rich content (Quill Delta JSON)', type: Object })
   @IsObject()
-  content: Record<string, unknown>;
+  content!: Record<string, unknown>;
 
   @ApiProperty({ description: 'HTML representation of content' })
   @IsString()
-  contentHtml: string;
+  contentHtml!: string;
 
   @ApiPropertyOptional({ description: 'Cover image URL' })
   @IsOptional()
@@ -125,5 +125,5 @@ export class PublishBlogDto {
     description: 'Publish status (true=publish, false=unpublish)',
   })
   @IsBoolean()
-  published: boolean;
+  published!: boolean;
 }

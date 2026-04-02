@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ClerkModule } from './clerk/clerk.module';
@@ -15,6 +16,8 @@ import { ProjectsModule } from './projects/projects.module';
 import { BlogsModule } from './blogs/blogs.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -30,6 +33,8 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     PrismaModule,
     AuthModule,
     ClerkModule,
+    CloudinaryModule,
+    QueueModule,
     CollegesModule,
     DepartmentsModule,
     EventsModule,
@@ -41,6 +46,12 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     BlogsModule,
     CertificatesModule,
     WebhooksModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
