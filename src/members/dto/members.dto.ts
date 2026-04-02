@@ -61,6 +61,10 @@ export class InviteMemberDto {
   })
   username!: string;
 
+  @ApiProperty({ description: 'Profile image URL' })
+  @IsUrl()
+  imageUrl!: string;
+
   @ApiProperty({ description: 'College ID' })
   @IsString()
   collegeId!: string;
@@ -88,27 +92,32 @@ export class InviteMemberDto {
   @Min(2000)
   @Max(2100)
   graduationYear?: number;
-
-  @ApiProperty({ description: 'Profile image URL' })
-  @IsUrl()
-  imageUrl!: string;
 }
 
 export class UpdateMemberDto {
-  @ApiPropertyOptional({ description: 'Full name' })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiPropertyOptional({ description: 'Profile image URL' })
-  @IsOptional()
-  @IsUrl()
-  imageUrl?: string;
-
   @ApiPropertyOptional({ description: 'Phone number' })
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional({ description: 'College ID' })
+  @IsOptional()
+  @IsString()
+  collegeId?: string;
+
+  @ApiPropertyOptional({ description: 'Department ID' })
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @ApiPropertyOptional({
+    description: 'College ID number (roll number)',
+    example: 12345,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  collegeIdNo?: number;
 
   @ApiPropertyOptional({ description: 'Bio' })
   @IsOptional()

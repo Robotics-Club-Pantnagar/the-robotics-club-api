@@ -18,10 +18,14 @@ export class ParticipantsController {
     return this.participantsService.findByClerkId(user.id);
   }
 
-  @Post('me')
+  @Post('signup')
   @UserAuth()
   @ApiBearerAuth('user-auth')
-  @ApiOperation({ summary: 'Create participant profile' })
+  @ApiOperation({
+    summary: 'Signup participant profile',
+    description:
+      'Creates participant profile using Clerk JWT (Authorization header) and signup fields from request body.',
+  })
   createProfile(
     @CurrentUser() user: UserPrincipal,
     @Body() createParticipantDto: CreateParticipantDto,

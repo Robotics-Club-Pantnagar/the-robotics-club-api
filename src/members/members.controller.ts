@@ -37,7 +37,7 @@ export class MembersController {
   @ApiOperation({
     summary: 'Invite a new member (Admin only)',
     description:
-      'Sends a Clerk invitation to the email. Member profile is created with pending status. The invitation is accepted via Clerk, which triggers a webhook to activate the member.',
+      'Sends a Clerk invitation and creates a pending member profile immediately. After invite acceptance, Clerk user.created updates and activates that profile.',
   })
   invite(@Body() inviteMemberDto: InviteMemberDto) {
     return this.membersService.invite(inviteMemberDto);

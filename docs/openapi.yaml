@@ -1560,8 +1560,8 @@ paths:
       summary: Get current participant profile
       tags:
         - Participants
-    post:
-      operationId: ParticipantsController_createProfile
+    patch:
+      operationId: ParticipantsController_updateProfile
       parameters: []
       requestBody:
         required: true
@@ -1570,24 +1570,6 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: Full name
-                  example: John Doe
-                email:
-                  type: string
-                  format: email
-                  description: Email address
-                  example: john@example.com
-                username:
-                  type: string
-                  pattern: /^[a-z0-9_]+$/
-                  description: Username (lowercase, numbers, underscores only)
-                  example: john_doe
-                imageUrl:
-                  type: string
-                  format: uri
-                  description: Profile image URL
                 phone:
                   type: string
                   description: Phone number
@@ -1605,20 +1587,94 @@ paths:
                 year:
                   type: string
                   description: Academic year
+            example:
+              phone: string
+              collegeId: string
+              departmentId: string
+              collegeIdNo: 12345
+              year: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      phone:
+                        type: string
+                        description: Phone number
+                      collegeId:
+                        type: string
+                        description: College ID
+                      departmentId:
+                        type: string
+                        description: Department ID
+                      collegeIdNo:
+                        type: number
+                        minimum: 1
+                        description: College ID number (roll number)
+                        example: 12345
+                      year:
+                        type: string
+                        description: Academic year
+              example:
+                success: true
+                data:
+                  phone: string
+                  collegeId: string
+                  departmentId: string
+                  collegeIdNo: 12345
+                  year: string
+      security:
+        - user-auth: []
+      summary: Update participant profile
+      tags:
+        - Participants
+  /participants/signup:
+    post:
+      description: Creates participant profile using Clerk JWT (Authorization header) and signup fields from request body.
+      operationId: ParticipantsController_createProfile
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                collegeId:
+                  type: string
+                  description: College ID
+                departmentId:
+                  type: string
+                  description: Department ID
+                collegeIdNo:
+                  type: number
+                  minimum: 1
+                  description: College ID number (roll number)
+                  example: 12345
+                phone:
+                  type: string
+                  description: Phone number
+                year:
+                  type: string
+                  description: Academic year
                   example: 3rd Year
               required:
-                - name
-                - email
-                - username
-                - imageUrl
                 - collegeId
                 - departmentId
                 - collegeIdNo
             example:
-              name: John Doe
-              email: john@example.com
-              username: john_doe
-              imageUrl: https://example.com/resource
               collegeId: string
               departmentId: string
               collegeIdNo: 12345
@@ -1641,27 +1697,6 @@ paths:
                   data:
                     type: object
                     properties:
-                      name:
-                        type: string
-                        description: Full name
-                        example: John Doe
-                      email:
-                        type: string
-                        format: email
-                        description: Email address
-                        example: john@example.com
-                      username:
-                        type: string
-                        pattern: /^[a-z0-9_]+$/
-                        description: Username (lowercase, numbers, underscores only)
-                        example: john_doe
-                      imageUrl:
-                        type: string
-                        format: uri
-                        description: Profile image URL
-                      phone:
-                        type: string
-                        description: Phone number
                       collegeId:
                         type: string
                         description: College ID
@@ -1673,25 +1708,20 @@ paths:
                         minimum: 1
                         description: College ID number (roll number)
                         example: 12345
+                      phone:
+                        type: string
+                        description: Phone number
                       year:
                         type: string
                         description: Academic year
                         example: 3rd Year
                     required:
-                      - name
-                      - email
-                      - username
-                      - imageUrl
                       - collegeId
                       - departmentId
                       - collegeIdNo
               example:
                 success: true
                 data:
-                  name: John Doe
-                  email: john@example.com
-                  username: john_doe
-                  imageUrl: https://example.com/resource
                   collegeId: string
                   departmentId: string
                   collegeIdNo: 12345
@@ -1699,77 +1729,7 @@ paths:
                   year: 3rd Year
       security:
         - user-auth: []
-      summary: Create participant profile
-      tags:
-        - Participants
-    patch:
-      operationId: ParticipantsController_updateProfile
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Full name
-                imageUrl:
-                  type: string
-                  format: uri
-                  description: Profile image URL
-                phone:
-                  type: string
-                  description: Phone number
-                year:
-                  type: string
-                  description: Academic year
-            example:
-              name: string
-              imageUrl: https://example.com/resource
-              phone: string
-              year: string
-      responses:
-        '200':
-          description: ''
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - success
-                  - data
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                        description: Full name
-                      imageUrl:
-                        type: string
-                        format: uri
-                        description: Profile image URL
-                      phone:
-                        type: string
-                        description: Phone number
-                      year:
-                        type: string
-                        description: Academic year
-              example:
-                success: true
-                data:
-                  name: string
-                  imageUrl: https://example.com/resource
-                  phone: string
-                  year: string
-      security:
-        - user-auth: []
-      summary: Update participant profile
+      summary: Signup participant profile
       tags:
         - Participants
   /participants/me/events:
@@ -2402,16 +2362,20 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: Full name
-                imageUrl:
-                  type: string
-                  format: uri
-                  description: Profile image URL
                 phone:
                   type: string
                   description: Phone number
+                collegeId:
+                  type: string
+                  description: College ID
+                departmentId:
+                  type: string
+                  description: Department ID
+                collegeIdNo:
+                  type: number
+                  minimum: 1
+                  description: College ID number (roll number)
+                  example: 12345
                 bio:
                   type: string
                   description: Bio
@@ -2430,9 +2394,10 @@ paths:
                   type: string
                   description: GitHub username
             example:
-              name: string
-              imageUrl: https://example.com/resource
               phone: string
+              collegeId: string
+              departmentId: string
+              collegeIdNo: 12345
               bio: string
               graduationYear: 2000
               instagram: string
@@ -2455,16 +2420,20 @@ paths:
                   data:
                     type: object
                     properties:
-                      name:
-                        type: string
-                        description: Full name
-                      imageUrl:
-                        type: string
-                        format: uri
-                        description: Profile image URL
                       phone:
                         type: string
                         description: Phone number
+                      collegeId:
+                        type: string
+                        description: College ID
+                      departmentId:
+                        type: string
+                        description: Department ID
+                      collegeIdNo:
+                        type: number
+                        minimum: 1
+                        description: College ID number (roll number)
+                        example: 12345
                       bio:
                         type: string
                         description: Bio
@@ -2485,9 +2454,10 @@ paths:
               example:
                 success: true
                 data:
-                  name: string
-                  imageUrl: https://example.com/resource
                   phone: string
+                  collegeId: string
+                  departmentId: string
+                  collegeIdNo: 12345
                   bio: string
                   graduationYear: 2000
                   instagram: string
@@ -2534,8 +2504,8 @@ paths:
   /members/invite:
     post:
       description: >-
-        Sends a Clerk invitation to the email. Member profile is created with pending status. The invitation is accepted
-        via Clerk, which triggers a webhook to activate the member.
+        Sends a Clerk invitation and creates a pending member profile immediately. After invite acceptance, Clerk
+        user.created updates and activates that profile.
       operationId: MembersController_invite
       parameters: []
       requestBody:
@@ -2559,6 +2529,10 @@ paths:
                   pattern: /^[a-z0-9_]+$/
                   description: Username (lowercase, numbers, underscores only)
                   example: jane_smith
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Profile image URL
                 collegeId:
                   type: string
                   description: College ID
@@ -2576,26 +2550,22 @@ paths:
                   maximum: 2100
                   description: Expected graduation year
                   example: 2025
-                imageUrl:
-                  type: string
-                  format: uri
-                  description: Profile image URL
               required:
                 - name
                 - email
                 - username
+                - imageUrl
                 - collegeId
                 - departmentId
                 - collegeIdNo
-                - imageUrl
             example:
               name: Jane Smith
               email: jane@example.com
               username: jane_smith
+              imageUrl: https://example.com/resource
               collegeId: string
               departmentId: string
               collegeIdNo: 12345
-              imageUrl: https://example.com/resource
               graduationYear: 2025
       responses:
         '201':
@@ -2628,6 +2598,10 @@ paths:
                         pattern: /^[a-z0-9_]+$/
                         description: Username (lowercase, numbers, underscores only)
                         example: jane_smith
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Profile image URL
                       collegeId:
                         type: string
                         description: College ID
@@ -2645,28 +2619,24 @@ paths:
                         maximum: 2100
                         description: Expected graduation year
                         example: 2025
-                      imageUrl:
-                        type: string
-                        format: uri
-                        description: Profile image URL
                     required:
                       - name
                       - email
                       - username
+                      - imageUrl
                       - collegeId
                       - departmentId
                       - collegeIdNo
-                      - imageUrl
               example:
                 success: true
                 data:
                   name: Jane Smith
                   email: jane@example.com
                   username: jane_smith
+                  imageUrl: https://example.com/resource
                   collegeId: string
                   departmentId: string
                   collegeIdNo: 12345
-                  imageUrl: https://example.com/resource
                   graduationYear: 2025
       security:
         - team-auth: []

@@ -68,7 +68,7 @@ Primary decorators used in routes:
 
 ### Participants
 - `GET /participants/me`
-- `POST /participants/me`
+- `POST /participants/signup`
 - `PATCH /participants/me`
 - `GET /participants/me/events`
 - `GET /participants/:id`
@@ -97,15 +97,21 @@ Additional admin utility routes are available for template management and event-
 
 ### Members and Invitations
 - `POST /members/invite` (admin)
-- Clerk webhook acceptance links Clerk user IDs to existing records.
+- Invite creates a pending member record immediately (invitation ID as temporary ID).
+- On Clerk `user.created` (team webhook), backend activates and updates the pending member record.
+- On Clerk `user.updated` (team webhook), backend syncs Clerk-managed fields only (name/email/username/imageUrl).
 
 ### Webhooks
 - `POST /webhooks/clerk/user`
 - `POST /webhooks/clerk/team`
 
 Supported webhook events:
-- `user.created`
-- `user.updated`
+- Participant webhook (`/webhooks/clerk/user`):
+  - `user.created` is ignored by design.
+  - `user.updated` syncs Clerk-managed fields for existing participant profiles.
+- Team webhook (`/webhooks/clerk/team`):
+  - `user.created` activates/updates pending invited members.
+  - `user.updated` syncs Clerk-managed fields for existing members.
 
 Secrets:
 - `CLERK_USER_WEBHOOK_SECRET`

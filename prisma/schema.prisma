@@ -176,7 +176,7 @@ model Participant {
   college      College            @relation(fields: [collegeId], references: [id])
   departmentId String
   department   Department         @relation(fields: [departmentId], references: [id])
-  collegeIdNo  Int
+  collegeIdNo  Int                @unique
   year         String?
   events       EventParticipant[]
   ledTeams     Team[]             @relation("TeamLeader")
@@ -258,7 +258,7 @@ model Member {
   college            College          @relation(fields: [collegeId], references: [id])
   departmentId       String
   department         Department       @relation(fields: [departmentId], references: [id])
-  collegeIdNo        Int
+  collegeIdNo        Int              @unique
   graduationYear     Int? // Year they graduate/graduated
   instagram          String?
   linkedin           String?

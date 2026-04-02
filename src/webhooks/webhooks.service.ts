@@ -9,29 +9,34 @@ import { Webhook } from 'svix';
 import { MembersService } from '../members/members.service';
 import { ParticipantsService } from '../participants/participants.service';
 
-interface ClerkUserCreatedEvent {
-  data: {
+interface ClerkManagedProfilePayload {
+  name: string;
+  email: string;
+  username: string;
+  imageUrl?: string;
+}
+
+interface ClerkWebhookUserData {
+  id: string;
+  email_addresses: Array<{
+    email_address: string;
     id: string;
-    email_addresses: Array<{
-      email_address: string;
-      id: string;
-    }>;
-    primary_email_address_id: string;
-    image_url?: string;
-  };
+  }>;
+  primary_email_address_id: string;
+  username?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  image_url?: string;
+  public_metadata?: Record<string, unknown>;
+}
+
+interface ClerkUserCreatedEvent {
+  data: ClerkWebhookUserData;
   type: 'user.created';
 }
 
 interface ClerkUserUpdatedEvent {
-  data: {
-    id: string;
-    email_addresses: Array<{
-      email_address: string;
-      id: string;
-    }>;
-    primary_email_address_id: string;
-    image_url?: string;
-  };
+  data: ClerkWebhookUserData;
   type: 'user.updated';
 }
 
@@ -106,11 +111,22 @@ export class WebhooksService {
 
     switch (event.type) {
       case 'user.created':
+        if (audience === 'participant') {
+          this.logger.log(
+            `Ignoring participant user.created webhook for Clerk user ${
+              (event as ClerkUserCreatedEvent).data.id
+            }`,
+          );
+          return {
+            received: true,
+            processed: false,
+            reason: 'Participants are created through custom signup endpoint',
+          };
+        }
+
+        return this.handleMemberCreated(event as ClerkUserCreatedEvent);
       case 'user.updated':
-        return this.handleUserLifecycleEvent(
-          event as ClerkUserCreatedEvent | ClerkUserUpdatedEvent,
-          audience,
-        );
+        return this.handleUserUpdated(event as ClerkUserUpdatedEvent, audience);
       default:
         this.logger.log(`Ignoring unhandled Clerk event type: ${event.type}`);
         return { received: true, type: event.type };
@@ -161,31 +177,58 @@ export class WebhooksService {
     }
   }
 
-  private async handleUserLifecycleEvent(
-    event: ClerkUserCreatedEvent | ClerkUserUpdatedEvent,
-    audience: 'participant' | 'member',
-  ) {
-    const { data } = event;
+  private async handleMemberCreated(event: ClerkUserCreatedEvent) {
+    const profile = this.extractProfileFromWebhook(event.data);
+    if (!profile) {
+      this.logger.warn(
+        `No primary email found for Clerk user ${event.data.id}`,
+      );
+      return { received: true, processed: false, reason: 'No primary email' };
+    }
 
-    // Find the primary email
-    const primaryEmail = data.email_addresses.find(
-      (e) => e.id === data.primary_email_address_id,
+    const member = await this.membersService.createFromWebhook(
+      event.data.id,
+      profile,
     );
 
-    if (!primaryEmail) {
-      this.logger.warn(`No primary email found for Clerk user ${data.id}`);
+    if (!member) {
+      this.logger.log(
+        `No pending member found to activate for Clerk user ${event.data.id}`,
+      );
+      return {
+        received: true,
+        processed: false,
+        reason: 'No pending member found',
+      };
+    }
+
+    this.logger.log(
+      `Member ${member.email} activated via user.created webhook`,
+    );
+    return { received: true, processed: true, memberId: member.id };
+  }
+
+  private async handleUserUpdated(
+    event: ClerkUserUpdatedEvent,
+    audience: 'participant' | 'member',
+  ) {
+    const profile = this.extractProfileFromWebhook(event.data);
+    if (!profile) {
+      this.logger.warn(
+        `No primary email found for Clerk user ${event.data.id}`,
+      );
       return { received: true, processed: false, reason: 'No primary email' };
     }
 
     if (audience === 'participant') {
       const participant =
-        await this.participantsService.linkParticipantFromWebhook(
-          primaryEmail.email_address,
-          data.id,
+        await this.participantsService.syncParticipantFromWebhook(
+          event.data.id,
+          profile,
         );
 
       if (participant) {
-        this.logger.log(`Participant ${participant.email} linked via webhook`);
+        this.logger.log(`Participant ${participant.email} synced via webhook`);
         return {
           received: true,
           processed: true,
@@ -194,30 +237,99 @@ export class WebhooksService {
       }
 
       this.logger.log(
-        `No participant found for email ${primaryEmail.email_address}`,
+        `No participant profile found for Clerk user ${event.data.id}`,
       );
       return {
         received: true,
         processed: false,
-        reason: 'No matching participant found',
+        reason: 'Participant profile not created yet',
       };
     }
 
-    const member = await this.membersService.linkMemberFromWebhook(
-      primaryEmail.email_address,
-      data.id,
+    const member = await this.membersService.syncMemberFromWebhook(
+      event.data.id,
+      profile,
     );
 
     if (member) {
-      this.logger.log(`Member ${member.email} linked via webhook`);
+      this.logger.log(`Member ${member.email} synced via webhook`);
       return { received: true, processed: true, memberId: member.id };
     }
 
-    this.logger.log(`No member found for email ${primaryEmail.email_address}`);
+    this.logger.log(`No member found for Clerk user ${event.data.id}`);
     return {
       received: true,
       processed: false,
       reason: 'No matching member found',
     };
+  }
+
+  private extractProfileFromWebhook(
+    data: ClerkWebhookUserData,
+  ): ClerkManagedProfilePayload | null {
+    const primaryEmail =
+      data.email_addresses.find(
+        (emailAddress) => emailAddress.id === data.primary_email_address_id,
+      )?.email_address ?? data.email_addresses[0]?.email_address;
+
+    if (!primaryEmail) {
+      return null;
+    }
+
+    const normalizedEmail = primaryEmail.toLowerCase();
+    const username = this.normalizeUsername(
+      data.username,
+      normalizedEmail,
+      data.id,
+    );
+    const name = this.buildDisplayName(
+      data.first_name,
+      data.last_name,
+      username,
+      normalizedEmail,
+    );
+
+    return {
+      name,
+      email: normalizedEmail,
+      username,
+      imageUrl: data.image_url,
+    };
+  }
+
+  private normalizeUsername(
+    rawUsername: string | null | undefined,
+    email: string,
+    userId: string,
+  ): string {
+    const source = rawUsername?.trim() || email.split('@')[0] || userId;
+    const normalized = source
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    if (normalized.length > 0) {
+      return normalized;
+    }
+
+    const fallbackSeed = userId.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return `user_${fallbackSeed.slice(-12) || 'member'}`;
+  }
+
+  private buildDisplayName(
+    firstName: string | null | undefined,
+    lastName: string | null | undefined,
+    username: string,
+    email: string,
+  ): string {
+    const nameParts = [firstName?.trim(), lastName?.trim()].filter(
+      (part): part is string => Boolean(part && part.length > 0),
+    );
+    if (nameParts.length > 0) {
+      return nameParts.join(' ');
+    }
+
+    return username || email.split('@')[0];
   }
 }
