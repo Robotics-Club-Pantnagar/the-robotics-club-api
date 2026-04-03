@@ -68,11 +68,15 @@ Primary decorators used in routes:
 
 ### Participants
 - `GET /participants/me`
-- `POST /participants/exists` (takes Clerk token and checks profile existence)
 - `POST /participants/signup`
 - `PATCH /participants/me`
 - `GET /participants/me/events`
 - `GET /participants/:id`
+
+Participant onboarding behavior:
+- Frontend should use Clerk `publicMetadata.profileCompleted` to decide onboarding vs dashboard.
+- If `profileCompleted` is not true, collect required participant details and call `POST /participants/signup`.
+- Signup is kept in sync across DB and Clerk metadata: backend creates participant, then sets `publicMetadata.profileCompleted = true`; if metadata update fails, participant creation is rolled back.
 
 ### Teams
 - `POST /teams` (participant)

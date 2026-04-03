@@ -62,3 +62,5 @@ docs/.openapi.hash
 requirements.md
 openapi.md
 pdf_generation.md
+frontend_generation_participant.md
+frontend_generation_team_admin.md

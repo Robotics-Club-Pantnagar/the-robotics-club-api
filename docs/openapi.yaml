@@ -1640,44 +1640,6 @@ paths:
       summary: Update participant profile
       tags:
         - Participants
-  /participants/exists:
-    post:
-      description: Validates Clerk token from request body and returns whether a participant profile exists in the database.
-      operationId: ParticipantsController_exists
-      parameters: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                token:
-                  type: string
-                  description: Clerk JWT token (raw token or Bearer token)
-                  example: eyJhbGciOi...
-              required:
-                - token
-            example:
-              token: eyJhbGciOi...
-      responses:
-        '200':
-          description: Whether participant profile exists
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - exists
-                properties:
-                  exists:
-                    type: boolean
-                    example: true
-              example:
-                exists: true
-      summary: Check whether participant exists
-      tags:
-        - Participants
   /participants/signup:
     post:
       description: Creates participant profile using Clerk JWT (Authorization header) and signup fields from request body.
