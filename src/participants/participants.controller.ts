@@ -1,7 +1,25 @@
-import { Controller, Get, Post, Patch, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { ParticipantsService } from './participants.service';
-import { CreateParticipantDto, UpdateParticipantDto } from './dto';
+import {
+  CreateParticipantDto,
+  UpdateParticipantDto,
+  CheckParticipantExistsDto,
+} from './dto';
 import { UserAuth, CurrentUser } from '../auth/decorators';
 import type { UserPrincipal } from '../auth/types';
 
@@ -16,6 +34,30 @@ export class ParticipantsController {
   @ApiOperation({ summary: 'Get current participant profile' })
   getMe(@CurrentUser() user: UserPrincipal) {
     return this.participantsService.findByClerkId(user.id);
+  }
+
+  @Post('exists')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Check whether participant exists',
+    description:
+      'Validates Clerk token from request body and returns whether a participant profile exists in the database.',
+  })
+  @ApiOkResponse({
+    description: 'Whether participant profile exists',
+    schema: {
+      type: 'object',
+      required: ['exists'],
+      properties: {
+        exists: {
+          type: 'boolean',
+          example: true,
+        },
+      },
+    },
+  })
+  exists(@Body() body: CheckParticipantExistsDto) {
+    return this.participantsService.existsByClerkToken(body.token);
   }
 
   @Post('signup')

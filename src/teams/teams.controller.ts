@@ -9,11 +9,17 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { TeamsService } from './teams.service';
 import {
   CreateTeamDto,
   UpdateTeamDto,
+  SearchEventTeamsDto,
   JoinTeamRequestDto,
   ListJoinRequestsDto,
   ReviewJoinRequestDto,
@@ -27,6 +33,47 @@ import type { AuthPrincipal, UserPrincipal } from '../auth/types';
 @Controller('teams')
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
+
+  @Get('events/:eventId')
+  @ApiOperation({
+    summary: 'Look up teams in an event',
+    description:
+      'Lists teams registered in an event, supports optional name filter, and includes team leader details.',
+  })
+  @ApiOkResponse({
+    description: 'Teams registered in the event',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'name', 'leader'],
+        properties: {
+          id: { type: 'string', example: 'team_123' },
+          name: { type: 'string', example: 'Robo Warriors' },
+          leader: {
+            type: 'object',
+            required: ['id', 'name', 'username', 'imageUrl'],
+            properties: {
+              id: { type: 'string', example: 'user_123' },
+              name: { type: 'string', example: 'John Doe' },
+              username: { type: 'string', example: 'john_doe' },
+              imageUrl: {
+                type: 'string',
+                format: 'uri',
+                example: 'https://example.com/avatar.jpg',
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  findByEvent(
+    @Param('eventId') eventId: string,
+    @Query() query: SearchEventTeamsDto,
+  ) {
+    return this.teamsService.findByEvent(eventId, query);
+  }
 
   @Post()
   @UserAuth()

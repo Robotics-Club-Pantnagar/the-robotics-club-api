@@ -14,6 +14,16 @@ export class UpdateTeamDto {
   name?: string;
 }
 
+export class SearchEventTeamsDto {
+  @ApiPropertyOptional({
+    description: 'Optional team name filter (case-insensitive partial match)',
+    example: 'robo',
+  })
+  @IsOptional()
+  @IsString()
+  name?: string;
+}
+
 export class JoinTeamRequestDto {
   @ApiProperty({ description: 'Event ID for this join request' })
   @IsString()

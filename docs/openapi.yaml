@@ -1640,6 +1640,44 @@ paths:
       summary: Update participant profile
       tags:
         - Participants
+  /participants/exists:
+    post:
+      description: Validates Clerk token from request body and returns whether a participant profile exists in the database.
+      operationId: ParticipantsController_exists
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Clerk JWT token (raw token or Bearer token)
+                  example: eyJhbGciOi...
+              required:
+                - token
+            example:
+              token: eyJhbGciOi...
+      responses:
+        '200':
+          description: Whether participant profile exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - exists
+                properties:
+                  exists:
+                    type: boolean
+                    example: true
+              example:
+                exists: true
+      summary: Check whether participant exists
+      tags:
+        - Participants
   /participants/signup:
     post:
       description: Creates participant profile using Clerk JWT (Authorization header) and signup fields from request body.
@@ -1784,6 +1822,75 @@ paths:
       summary: Get participant public profile by ID
       tags:
         - Participants
+  /teams/events/{eventId}:
+    get:
+      description: Lists teams registered in an event, supports optional name filter, and includes team leader details.
+      operationId: TeamsController_findByEvent
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: name
+          required: false
+          in: query
+          description: Optional team name filter (case-insensitive partial match)
+          schema:
+            example: robo
+            type: string
+      responses:
+        '200':
+          description: Teams registered in the event
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - name
+                    - leader
+                  properties:
+                    id:
+                      type: string
+                      example: team_123
+                    name:
+                      type: string
+                      example: Robo Warriors
+                    leader:
+                      type: object
+                      required:
+                        - id
+                        - name
+                        - username
+                        - imageUrl
+                      properties:
+                        id:
+                          type: string
+                          example: user_123
+                        name:
+                          type: string
+                          example: John Doe
+                        username:
+                          type: string
+                          example: john_doe
+                        imageUrl:
+                          type: string
+                          format: uri
+                          example: https://example.com/avatar.jpg
+              example:
+                - id: team_123
+                  name: Robo Warriors
+                  leader:
+                    id: user_123
+                    name: John Doe
+                    username: john_doe
+                    imageUrl: https://example.com/avatar.jpg
+      summary: Look up teams in an event
+      tags:
+        - Teams
   /teams:
     post:
       operationId: TeamsController_create

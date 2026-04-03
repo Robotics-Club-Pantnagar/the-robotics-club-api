@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateTeamDto,
   UpdateTeamDto,
+  SearchEventTeamsDto,
   JoinTeamRequestDto,
   ListJoinRequestsDto,
   ReviewJoinRequestAction,
@@ -19,6 +20,87 @@ import {
 @Injectable()
 export class TeamsService {
   constructor(private prisma: PrismaService) {}
+
+  async findByEvent(
+    eventId: string,
+    query: SearchEventTeamsDto,
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      leader: {
+        id: string;
+        name: string;
+        username: string;
+        imageUrl: string;
+      };
+    }[]
+  > {
+    const { name } = query;
+
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, hasTeam: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (!event.hasTeam) {
+      throw new BadRequestException('This event does not support teams');
+    }
+
+    const where: {
+      eventId: string;
+      team?: {
+        name: {
+          contains: string;
+          mode: 'insensitive';
+        };
+      };
+    } = {
+      eventId,
+    };
+
+    if (name?.trim()) {
+      where.team = {
+        name: {
+          contains: name.trim(),
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    const teamsInEvent = await this.prisma.eventTeam.findMany({
+      where,
+      orderBy: {
+        team: {
+          name: 'asc',
+        },
+      },
+      include: {
+        team: {
+          include: {
+            leader: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                imageUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return teamsInEvent.map((eventTeam) => ({
+      id: eventTeam.team.id,
+      name: eventTeam.team.name,
+      leader: eventTeam.team.leader,
+    }));
+  }
 
   async create(creatorId: string, data: CreateTeamDto) {
     // Verify creator exists

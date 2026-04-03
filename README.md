@@ -68,6 +68,7 @@ Primary decorators used in routes:
 
 ### Participants
 - `GET /participants/me`
+- `POST /participants/exists` (takes Clerk token and checks profile existence)
 - `POST /participants/signup`
 - `PATCH /participants/me`
 - `GET /participants/me/events`
@@ -75,6 +76,7 @@ Primary decorators used in routes:
 
 ### Teams
 - `POST /teams` (participant)
+- `GET /teams/events/:eventId` (optional `name` filter; includes leader info)
 - `GET /teams/:id`
 - `PATCH /teams/:id` (team leader)
 - `DELETE /teams/:id` (team leader or admin)

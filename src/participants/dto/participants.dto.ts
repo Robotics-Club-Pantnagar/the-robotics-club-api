@@ -1,5 +1,21 @@
-import { IsString, IsInt, IsPositive, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsPositive,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class CheckParticipantExistsDto {
+  @ApiProperty({
+    description: 'Clerk JWT token (raw token or Bearer token)',
+    example: 'eyJhbGciOi...',
+  })
+  @IsString()
+  @IsNotEmpty()
+  token!: string;
+}
 
 export class CreateParticipantDto {
   @ApiProperty({ description: 'College ID' })

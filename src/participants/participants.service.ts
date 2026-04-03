@@ -3,7 +3,10 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { verifyToken } from '@clerk/backend';
 import { ClerkService } from '../clerk/clerk.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateParticipantDto, UpdateParticipantDto } from './dto';
@@ -27,6 +30,7 @@ export class ParticipantsService {
   constructor(
     private prisma: PrismaService,
     private clerk: ClerkService,
+    private config: ConfigService,
   ) {}
 
   async findByClerkId(clerkId: string) {
@@ -37,6 +41,35 @@ export class ParticipantsService {
         department: true,
       },
     });
+  }
+
+  async existsByClerkId(clerkId: string) {
+    const participant = await this.prisma.participant.findUnique({
+      where: { id: clerkId },
+      select: { id: true },
+    });
+
+    return {
+      exists: Boolean(participant),
+    };
+  }
+
+  async existsByClerkToken(rawToken: string) {
+    const secretKey = this.config.get<string>('CLERK_USER_SECRET_KEY');
+    if (!secretKey) {
+      throw new UnauthorizedException('Server not configured for auth');
+    }
+
+    const token = rawToken.startsWith('Bearer ')
+      ? rawToken.slice(7).trim()
+      : rawToken.trim();
+
+    try {
+      const payload = await verifyToken(token, { secretKey });
+      return this.existsByClerkId(payload.sub);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 
   async findOne(id: string) {
