@@ -192,6 +192,7 @@ model Participant {
 model Project {
   id          String          @id @default(cuid())
   title       String
+  slug        String          @unique
   description String          @db.Text
   content     Json // Tiptap JSON document
   contentHtml String          @db.Text // HTML generated from Tiptap content

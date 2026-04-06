@@ -46,6 +46,12 @@ export class ProjectsController {
     return this.projectsService.findAll(query);
   }
 
+  @Get('slug/:slug')
+  @ApiOperation({ summary: 'Get project by slug with members' })
+  findBySlug(@Param('slug') slug: string, @Query() query: ContentViewQueryDto) {
+    return this.projectsService.findBySlug(slug, query.contentView ?? 'both');
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get project by ID with members' })
   findOne(@Param('id') id: string, @Query() query: ContentViewQueryDto) {
@@ -110,12 +116,41 @@ export class ProjectsController {
     return this.projectsService.update(id, user.id, updateProjectDto);
   }
 
+  @Patch('slug/:slug')
+  @TeamMember()
+  @ApiBearerAuth('team-auth')
+  @ApiOperation({ summary: 'Update project by slug (Project member only)' })
+  updateBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user: TeamUserPrincipal,
+    @Body() updateProjectDto: UpdateProjectDto,
+  ) {
+    return this.projectsService.updateBySlug(slug, user.id, updateProjectDto);
+  }
+
   @Delete(':id')
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Delete project (Project creator or Admin only)' })
   remove(@Param('id') id: string, @CurrentUser() user: TeamUserPrincipal) {
     return this.projectsService.remove(id, user.id, user.role === 'admin');
+  }
+
+  @Delete('slug/:slug')
+  @TeamMember()
+  @ApiBearerAuth('team-auth')
+  @ApiOperation({
+    summary: 'Delete project by slug (Project creator or Admin only)',
+  })
+  removeBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user: TeamUserPrincipal,
+  ) {
+    return this.projectsService.removeBySlug(
+      slug,
+      user.id,
+      user.role === 'admin',
+    );
   }
 
   @Post(':id/members')

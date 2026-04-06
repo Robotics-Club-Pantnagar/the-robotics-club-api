@@ -188,9 +188,11 @@ Error response:
 
 - Request payloads must send `content` as a Tiptap JSON document.
 - Do not send `contentHtml` in create/update requests.
+- Projects support optional `slug` in create/update payloads (auto-generated from title when omitted).
 - Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
 - Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
 - Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.
+- Projects support slug-based routes where useful: `GET /projects/slug/:slug`, `PATCH /projects/slug/:slug`, `DELETE /projects/slug/:slug`.
 - Supported editor features include open-source Tiptap nodes/marks such as tables, task lists, highlights, underline, subscript/superscript, links, and images.
 - Raw video/audio/file nodes are rejected; only embedded video content is allowed.
 - Upload editor images as files via `POST /blogs/editor/images` or `POST /projects/editor/images` (`multipart/form-data`, field name `file`). The API stores files in Cloudinary and returns the URL.

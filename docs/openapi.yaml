@@ -3105,6 +3105,12 @@ paths:
           description: Filter by member ID
           schema:
             type: string
+        - name: slug
+          required: false
+          in: query
+          description: Filter by project slug
+          schema:
+            type: string
         - name: contentView
           required: false
           in: query
@@ -3150,6 +3156,11 @@ paths:
                               type: string
                               description: Project title
                               example: Autonomous Robot
+                            slug:
+                              type: string
+                              pattern: /^[a-z0-9-]+$/
+                              description: URL slug (auto-generated if not provided)
+                              example: autonomous-robot
                             description:
                               type: string
                               description: Short project description
@@ -3209,6 +3220,7 @@ paths:
                             content:
                               - type: text
                                 text: Built with ROS and OpenCV.
+                      slug: autonomous-robot
                       imageUrl: https://example.com/resource
                       githubRepo: https://example.com/resource
                       demoUrl: https://example.com/resource
@@ -3234,6 +3246,11 @@ paths:
                   type: string
                   description: Project title
                   example: Autonomous Robot
+                slug:
+                  type: string
+                  pattern: /^[a-z0-9-]+$/
+                  description: URL slug (auto-generated if not provided)
+                  example: autonomous-robot
                 description:
                   type: string
                   description: Short project description
@@ -3280,6 +3297,7 @@ paths:
                     content:
                       - type: text
                         text: Built with ROS and OpenCV.
+              slug: autonomous-robot
               imageUrl: https://example.com/resource
               githubRepo: https://example.com/resource
               demoUrl: https://example.com/resource
@@ -3306,6 +3324,11 @@ paths:
                         type: string
                         description: Project title
                         example: Autonomous Robot
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: autonomous-robot
                       description:
                         type: string
                         description: Short project description
@@ -3355,6 +3378,7 @@ paths:
                         content:
                           - type: text
                             text: Built with ROS and OpenCV.
+                  slug: autonomous-robot
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3363,6 +3387,208 @@ paths:
       security:
         - team-auth: []
       summary: Create a new project (Member only)
+      tags:
+        - Projects
+  /projects/slug/{slug}:
+    get:
+      operationId: ProjectsController_findBySlug
+      parameters:
+        - name: slug
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in responses. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: both
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      summary: Get project by slug with members
+      tags:
+        - Projects
+    patch:
+      operationId: ProjectsController_updateBySlug
+      parameters:
+        - name: slug
+          required: true
+          in: path
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Project title
+                slug:
+                  type: string
+                  pattern: /^[a-z0-9-]+$/
+                  description: Project slug
+                description:
+                  type: string
+                  description: Project description
+                content:
+                  type: object
+                  description: >-
+                    Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes contentHtml
+                    automatically.
+                imageUrl:
+                  type: string
+                  format: uri
+                  description: Project image URL
+                githubRepo:
+                  type: string
+                  format: uri
+                  description: GitHub repository URL
+                demoUrl:
+                  type: string
+                  format: uri
+                  description: Demo/live URL
+                tags:
+                  description: Project tags
+                  type: array
+                  items:
+                    type: string
+            example:
+              title: string
+              slug: string
+              description: string
+              content: {}
+              imageUrl: https://example.com/resource
+              githubRepo: https://example.com/resource
+              demoUrl: https://example.com/resource
+              tags:
+                - string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      title:
+                        type: string
+                        description: Project title
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: Project slug
+                      description:
+                        type: string
+                        description: Project description
+                      content:
+                        type: object
+                        description: >-
+                          Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes
+                          contentHtml automatically.
+                      imageUrl:
+                        type: string
+                        format: uri
+                        description: Project image URL
+                      githubRepo:
+                        type: string
+                        format: uri
+                        description: GitHub repository URL
+                      demoUrl:
+                        type: string
+                        format: uri
+                        description: Demo/live URL
+                      tags:
+                        description: Project tags
+                        type: array
+                        items:
+                          type: string
+              example:
+                success: true
+                data:
+                  title: string
+                  slug: string
+                  description: string
+                  content: {}
+                  imageUrl: https://example.com/resource
+                  githubRepo: https://example.com/resource
+                  demoUrl: https://example.com/resource
+                  tags:
+                    - string
+      security:
+        - team-auth: []
+      summary: Update project by slug (Project member only)
+      tags:
+        - Projects
+    delete:
+      operationId: ProjectsController_removeBySlug
+      parameters:
+        - name: slug
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - team-auth: []
+      summary: Delete project by slug (Project creator or Admin only)
       tags:
         - Projects
   /projects/{id}:
@@ -3409,6 +3635,11 @@ paths:
                         type: string
                         description: Project title
                         example: Autonomous Robot
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: autonomous-robot
                       description:
                         type: string
                         description: Short project description
@@ -3458,6 +3689,7 @@ paths:
                         content:
                           - type: text
                             text: Built with ROS and OpenCV.
+                  slug: autonomous-robot
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3484,6 +3716,10 @@ paths:
                 title:
                   type: string
                   description: Project title
+                slug:
+                  type: string
+                  pattern: /^[a-z0-9-]+$/
+                  description: Project slug
                 description:
                   type: string
                   description: Project description
@@ -3511,6 +3747,7 @@ paths:
                     type: string
             example:
               title: string
+              slug: string
               description: string
               content: {}
               imageUrl: https://example.com/resource
@@ -3538,6 +3775,10 @@ paths:
                       title:
                         type: string
                         description: Project title
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: Project slug
                       description:
                         type: string
                         description: Project description
@@ -3567,6 +3808,7 @@ paths:
                 success: true
                 data:
                   title: string
+                  slug: string
                   description: string
                   content: {}
                   imageUrl: https://example.com/resource
@@ -3608,6 +3850,11 @@ paths:
                         type: string
                         description: Project title
                         example: Autonomous Robot
+                      slug:
+                        type: string
+                        pattern: /^[a-z0-9-]+$/
+                        description: URL slug (auto-generated if not provided)
+                        example: autonomous-robot
                       description:
                         type: string
                         description: Short project description
@@ -3657,6 +3904,7 @@ paths:
                         content:
                           - type: text
                             text: Built with ROS and OpenCV.
+                  slug: autonomous-robot
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource

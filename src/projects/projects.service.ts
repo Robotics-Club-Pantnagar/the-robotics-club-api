@@ -18,6 +18,7 @@ import { Project, Prisma } from '../generated/prisma/client';
 import sanitizeHtml from 'sanitize-html';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
+import slugify from 'slugify';
 
 type UploadedImageFile = {
   buffer: Buffer;
@@ -40,6 +41,7 @@ export class ProjectsService {
       search,
       tags,
       memberId,
+      slug,
       contentView,
       limit = 20,
       offset = 0,
@@ -61,6 +63,10 @@ export class ProjectsService {
 
     if (memberId) {
       where.members = { some: { memberId } };
+    }
+
+    if (slug) {
+      where.slug = slug;
     }
 
     const [items, total] = await Promise.all([
@@ -110,12 +116,36 @@ export class ProjectsService {
     return this.applyContentView(project, normalizedContentView);
   }
 
+  async findBySlug(slug: string, contentView?: ContentView) {
+    const normalizedContentView = this.normalizeContentView(contentView);
+    const project = await this.prisma.project.findUnique({
+      where: { slug },
+      include: {
+        members: {
+          include: {
+            member: {
+              include: { college: true, department: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.applyContentView(project, normalizedContentView);
+  }
+
   async create(creatorId: string, data: CreateProjectDto) {
     const sanitizedHtml = this.buildContentHtmlFromTiptap(data.content);
+    const slug = await this.generateUniqueSlug(data.slug || data.title);
 
     const project = await this.prisma.project.create({
       data: {
         title: data.title,
+        slug,
         description: data.description,
         content: data.content as Prisma.InputJsonValue,
         contentHtml: sanitizedHtml,
@@ -141,9 +171,22 @@ export class ProjectsService {
   async update(id: string, requesterId: string, data: UpdateProjectDto) {
     await this.verifyProjectMembership(id, requesterId);
 
+    const existingProject = await this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+
+    if (!existingProject) {
+      throw new NotFoundException('Project not found');
+    }
+
     const updateData: Record<string, unknown> = { ...data };
     if (data.content) {
       updateData.contentHtml = this.buildContentHtmlFromTiptap(data.content);
+    }
+
+    if (data.slug && data.slug !== existingProject.slug) {
+      updateData.slug = await this.generateUniqueSlug(data.slug, id);
     }
 
     return this.prisma.project.update({
@@ -162,6 +205,36 @@ export class ProjectsService {
 
     await this.findOne(id);
     return this.prisma.project.delete({ where: { id } });
+  }
+
+  async updateBySlug(
+    slug: string,
+    requesterId: string,
+    data: UpdateProjectDto,
+  ) {
+    const project = await this.prisma.project.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.update(project.id, requesterId, data);
+  }
+
+  async removeBySlug(slug: string, requesterId: string, isAdmin: boolean) {
+    const project = await this.prisma.project.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return this.remove(project.id, requesterId, isAdmin);
   }
 
   async addMember(
@@ -257,6 +330,35 @@ export class ProjectsService {
     }
 
     return { ...rest, content, contentHtml };
+  }
+
+  private async generateUniqueSlug(
+    input: string,
+    excludeProjectId?: string,
+  ): Promise<string> {
+    const baseSlug = this.toSlug(input);
+    let slug = baseSlug;
+    let counter = 1;
+
+    let existing = await this.prisma.project.findUnique({ where: { slug } });
+
+    while (existing && existing.id !== excludeProjectId) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+      existing = await this.prisma.project.findUnique({ where: { slug } });
+    }
+
+    return slug;
+  }
+
+  private toSlug(input: string): string {
+    const slug = slugify(input, {
+      lower: true,
+      strict: true,
+      remove: /[*+~.()'"!:@]/g,
+    });
+
+    return slug || `project-${Date.now()}`;
   }
 
   private async verifyProjectMembership(projectId: string, memberId: string) {
