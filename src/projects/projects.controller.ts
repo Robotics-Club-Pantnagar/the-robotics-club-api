@@ -7,8 +7,19 @@ import {
   Body,
   Param,
   Query,
+  HttpStatus,
+  ParseFilePipeBuilder,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProjectsService } from './projects.service';
 import {
   FindProjectsDto,
@@ -18,6 +29,11 @@ import {
 } from './dto';
 import { TeamMember, CurrentUser } from '../auth/decorators';
 import type { TeamUserPrincipal } from '../auth/types';
+import { ContentViewQueryDto } from '../common/dto/content-view.dto';
+
+type UploadedImageFile = {
+  buffer: Buffer;
+};
 
 @ApiTags('Projects')
 @Controller('projects')
@@ -32,8 +48,8 @@ export class ProjectsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get project by ID with members' })
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@Param('id') id: string, @Query() query: ContentViewQueryDto) {
+    return this.projectsService.findOne(id, query.contentView ?? 'both');
   }
 
   @Post()
@@ -45,6 +61,41 @@ export class ProjectsController {
     @Body() createProjectDto: CreateProjectDto,
   ) {
     return this.projectsService.create(user.id, createProjectDto);
+  }
+
+  @Post('editor/images')
+  @TeamMember()
+  @ApiBearerAuth('team-auth')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary:
+      'Upload project editor image (image files only, stored in Cloudinary)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  uploadEditorImage(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/,
+        })
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 })
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: UploadedImageFile,
+  ) {
+    return this.projectsService.uploadEditorImage(file);
   }
 
   @Patch(':id')

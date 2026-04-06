@@ -4,9 +4,14 @@ import {
   IsArray,
   IsObject,
   IsUrl,
+  IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto';
+import {
+  CONTENT_VIEW_VALUES,
+  type ContentView,
+} from '../../common/dto/content-view.dto';
 
 export class FindProjectsDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Search by project title' })
@@ -24,6 +29,16 @@ export class FindProjectsDto extends PaginationDto {
   @IsOptional()
   @IsString()
   memberId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Controls rich content fields in response. both=content+contentHtml, html=only contentHtml, json=only content, none=exclude both.',
+    enum: CONTENT_VIEW_VALUES,
+    default: 'html',
+  })
+  @IsOptional()
+  @IsIn([...CONTENT_VIEW_VALUES])
+  contentView?: ContentView = 'html';
 }
 
 export class CreateProjectDto {
@@ -35,13 +50,22 @@ export class CreateProjectDto {
   @IsString()
   description!: string;
 
-  @ApiProperty({ description: 'Rich content (Quill Delta JSON)', type: Object })
+  @ApiProperty({
+    description:
+      'Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks, highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are rejected.',
+    type: Object,
+    example: {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: 'Built with ROS and OpenCV.' }],
+        },
+      ],
+    },
+  })
   @IsObject()
   content!: Record<string, unknown>;
-
-  @ApiProperty({ description: 'HTML representation of content' })
-  @IsString()
-  contentHtml!: string;
 
   @ApiPropertyOptional({ description: 'Project image URL' })
   @IsOptional()
@@ -77,17 +101,13 @@ export class UpdateProjectDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Rich content (Quill Delta JSON)',
+    description:
+      'Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes contentHtml automatically.',
     type: Object,
   })
   @IsOptional()
   @IsObject()
   content?: Record<string, unknown>;
-
-  @ApiPropertyOptional({ description: 'HTML representation of content' })
-  @IsOptional()
-  @IsString()
-  contentHtml?: string;
 
   @ApiPropertyOptional({ description: 'Project image URL' })
   @IsOptional()

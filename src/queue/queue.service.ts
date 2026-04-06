@@ -13,6 +13,7 @@ export interface CertificateJobData {
   departmentName: string;
   eventTitle: string;
   eventDates: string;
+  eventYear?: number;
   template: string;
   isReissue?: boolean;
 }
@@ -29,6 +30,7 @@ export interface BulkCertificateJobData {
   }>;
   eventTitle: string;
   eventDates: string;
+  eventYear: number;
   template: string;
 }
 
@@ -83,6 +85,7 @@ export class QueueService {
         departmentName: participant.departmentName,
         eventTitle: data.eventTitle,
         eventDates: data.eventDates,
+        eventYear: data.eventYear,
         template: data.template,
         isReissue: false,
       } as CertificateJobData,

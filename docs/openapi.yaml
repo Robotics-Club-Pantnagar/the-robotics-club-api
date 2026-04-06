@@ -3105,6 +3105,20 @@ paths:
           description: Filter by member ID
           schema:
             type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in response. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: html
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
       responses:
         '200':
           description: ''
@@ -3141,10 +3155,17 @@ paths:
                               description: Short project description
                             content:
                               type: object
-                              description: Rich content (Quill Delta JSON)
-                            contentHtml:
-                              type: string
-                              description: HTML representation of content
+                              description: >-
+                                Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                                highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio
+                                nodes are rejected.
+                              example:
+                                type: doc
+                                content:
+                                  - type: paragraph
+                                    content:
+                                      - type: text
+                                        text: Built with ROS and OpenCV.
                             imageUrl:
                               type: string
                               format: uri
@@ -3166,7 +3187,6 @@ paths:
                             - title
                             - description
                             - content
-                            - contentHtml
                       total:
                         type: number
                         example: 1
@@ -3182,8 +3202,13 @@ paths:
                   items:
                     - title: Autonomous Robot
                       description: string
-                      content: {}
-                      contentHtml: string
+                      content:
+                        type: doc
+                        content:
+                          - type: paragraph
+                            content:
+                              - type: text
+                                text: Built with ROS and OpenCV.
                       imageUrl: https://example.com/resource
                       githubRepo: https://example.com/resource
                       demoUrl: https://example.com/resource
@@ -3214,10 +3239,16 @@ paths:
                   description: Short project description
                 content:
                   type: object
-                  description: Rich content (Quill Delta JSON)
-                contentHtml:
-                  type: string
-                  description: HTML representation of content
+                  description: >-
+                    Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks, highlight,
+                    underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are rejected.
+                  example:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Built with ROS and OpenCV.
                 imageUrl:
                   type: string
                   format: uri
@@ -3239,12 +3270,16 @@ paths:
                 - title
                 - description
                 - content
-                - contentHtml
             example:
               title: Autonomous Robot
               description: string
-              content: {}
-              contentHtml: string
+              content:
+                type: doc
+                content:
+                  - type: paragraph
+                    content:
+                      - type: text
+                        text: Built with ROS and OpenCV.
               imageUrl: https://example.com/resource
               githubRepo: https://example.com/resource
               demoUrl: https://example.com/resource
@@ -3276,10 +3311,17 @@ paths:
                         description: Short project description
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Built with ROS and OpenCV.
                       imageUrl:
                         type: string
                         format: uri
@@ -3301,14 +3343,18 @@ paths:
                       - title
                       - description
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Autonomous Robot
                   description: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Built with ROS and OpenCV.
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3328,6 +3374,20 @@ paths:
           in: path
           schema:
             type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in responses. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: both
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
       responses:
         '200':
           description: ''
@@ -3354,10 +3414,17 @@ paths:
                         description: Short project description
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Built with ROS and OpenCV.
                       imageUrl:
                         type: string
                         format: uri
@@ -3379,14 +3446,18 @@ paths:
                       - title
                       - description
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Autonomous Robot
                   description: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Built with ROS and OpenCV.
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3418,10 +3489,9 @@ paths:
                   description: Project description
                 content:
                   type: object
-                  description: Rich content (Quill Delta JSON)
-                contentHtml:
-                  type: string
-                  description: HTML representation of content
+                  description: >-
+                    Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes contentHtml
+                    automatically.
                 imageUrl:
                   type: string
                   format: uri
@@ -3443,7 +3513,6 @@ paths:
               title: string
               description: string
               content: {}
-              contentHtml: string
               imageUrl: https://example.com/resource
               githubRepo: https://example.com/resource
               demoUrl: https://example.com/resource
@@ -3474,10 +3543,9 @@ paths:
                         description: Project description
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes
+                          contentHtml automatically.
                       imageUrl:
                         type: string
                         format: uri
@@ -3501,7 +3569,6 @@ paths:
                   title: string
                   description: string
                   content: {}
-                  contentHtml: string
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3546,10 +3613,17 @@ paths:
                         description: Short project description
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Built with ROS and OpenCV.
                       imageUrl:
                         type: string
                         format: uri
@@ -3571,14 +3645,18 @@ paths:
                       - title
                       - description
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Autonomous Robot
                   description: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Built with ROS and OpenCV.
                   imageUrl: https://example.com/resource
                   githubRepo: https://example.com/resource
                   demoUrl: https://example.com/resource
@@ -3587,6 +3665,47 @@ paths:
       security:
         - team-auth: []
       summary: Delete project (Project creator or Admin only)
+      tags:
+        - Projects
+  /projects/editor/images:
+    post:
+      operationId: ProjectsController_uploadEditorImage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - team-auth: []
+      summary: Upload project editor image (image files only, stored in Cloudinary)
       tags:
         - Projects
   /projects/{id}/members:
@@ -3733,6 +3852,20 @@ paths:
           description: Filter by author member ID
           schema:
             type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in response. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: html
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
       responses:
         '200':
           description: ''
@@ -3774,10 +3907,17 @@ paths:
                               description: Short excerpt/summary
                             content:
                               type: object
-                              description: Rich content (Quill Delta JSON)
-                            contentHtml:
-                              type: string
-                              description: HTML representation of content
+                              description: >-
+                                Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                                highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio
+                                nodes are rejected.
+                              example:
+                                type: doc
+                                content:
+                                  - type: paragraph
+                                    content:
+                                      - type: text
+                                        text: Getting started with robotics.
                             coverImage:
                               type: string
                               format: uri
@@ -3795,7 +3935,6 @@ paths:
                             - title
                             - excerpt
                             - content
-                            - contentHtml
                       total:
                         type: number
                         example: 1
@@ -3811,8 +3950,13 @@ paths:
                   items:
                     - title: Getting Started with Robotics
                       excerpt: string
-                      content: {}
-                      contentHtml: string
+                      content:
+                        type: doc
+                        content:
+                          - type: paragraph
+                            content:
+                              - type: text
+                                text: Getting started with robotics.
                       slug: getting-started-robotics
                       coverImage: https://example.com/resource
                       tags:
@@ -3848,10 +3992,16 @@ paths:
                   description: Short excerpt/summary
                 content:
                   type: object
-                  description: Rich content (Quill Delta JSON)
-                contentHtml:
-                  type: string
-                  description: HTML representation of content
+                  description: >-
+                    Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks, highlight,
+                    underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are rejected.
+                  example:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Getting started with robotics.
                 coverImage:
                   type: string
                   format: uri
@@ -3869,12 +4019,16 @@ paths:
                 - title
                 - excerpt
                 - content
-                - contentHtml
             example:
               title: Getting Started with Robotics
               excerpt: string
-              content: {}
-              contentHtml: string
+              content:
+                type: doc
+                content:
+                  - type: paragraph
+                    content:
+                      - type: text
+                        text: Getting started with robotics.
               slug: getting-started-robotics
               coverImage: https://example.com/resource
               tags:
@@ -3911,10 +4065,17 @@ paths:
                         description: Short excerpt/summary
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Getting started with robotics.
                       coverImage:
                         type: string
                         format: uri
@@ -3932,14 +4093,18 @@ paths:
                       - title
                       - excerpt
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Getting Started with Robotics
                   excerpt: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Getting started with robotics.
                   slug: getting-started-robotics
                   coverImage: https://example.com/resource
                   tags:
@@ -3959,6 +4124,20 @@ paths:
           in: path
           schema:
             type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in responses. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: both
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
       responses:
         '200':
           description: ''
@@ -3991,6 +4170,20 @@ paths:
           in: path
           schema:
             type: string
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in responses. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: both
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
       responses:
         '200':
           description: ''
@@ -4022,10 +4215,17 @@ paths:
                         description: Short excerpt/summary
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Getting started with robotics.
                       coverImage:
                         type: string
                         format: uri
@@ -4043,14 +4243,18 @@ paths:
                       - title
                       - excerpt
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Getting Started with Robotics
                   excerpt: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Getting started with robotics.
                   slug: getting-started-robotics
                   coverImage: https://example.com/resource
                   tags:
@@ -4088,10 +4292,9 @@ paths:
                   description: Short excerpt/summary
                 content:
                   type: object
-                  description: Rich content (Quill Delta JSON)
-                contentHtml:
-                  type: string
-                  description: HTML representation of content
+                  description: >-
+                    Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes contentHtml
+                    automatically.
                 coverImage:
                   type: string
                   format: uri
@@ -4106,7 +4309,6 @@ paths:
               slug: string
               excerpt: string
               content: {}
-              contentHtml: string
               coverImage: https://example.com/resource
               tags:
                 - string
@@ -4139,10 +4341,9 @@ paths:
                         description: Short excerpt/summary
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). If provided, backend regenerates and sanitizes
+                          contentHtml automatically.
                       coverImage:
                         type: string
                         format: uri
@@ -4159,7 +4360,6 @@ paths:
                   slug: string
                   excerpt: string
                   content: {}
-                  contentHtml: string
                   coverImage: https://example.com/resource
                   tags:
                     - string
@@ -4207,10 +4407,17 @@ paths:
                         description: Short excerpt/summary
                       content:
                         type: object
-                        description: Rich content (Quill Delta JSON)
-                      contentHtml:
-                        type: string
-                        description: HTML representation of content
+                        description: >-
+                          Rich content (Tiptap JSON document). Supports open-source nodes/marks (tables, tasks,
+                          highlight, underline, sub/sup, images, links, embedded videos). Raw file/video/audio nodes are
+                          rejected.
+                        example:
+                          type: doc
+                          content:
+                            - type: paragraph
+                              content:
+                                - type: text
+                                  text: Getting started with robotics.
                       coverImage:
                         type: string
                         format: uri
@@ -4228,14 +4435,18 @@ paths:
                       - title
                       - excerpt
                       - content
-                      - contentHtml
               example:
                 success: true
                 data:
                   title: Getting Started with Robotics
                   excerpt: string
-                  content: {}
-                  contentHtml: string
+                  content:
+                    type: doc
+                    content:
+                      - type: paragraph
+                        content:
+                          - type: text
+                            text: Getting started with robotics.
                   slug: getting-started-robotics
                   coverImage: https://example.com/resource
                   tags:
@@ -4244,6 +4455,47 @@ paths:
       security:
         - team-auth: []
       summary: Delete blog post (Author or Admin only)
+      tags:
+        - Blogs
+  /blogs/editor/images:
+    post:
+      operationId: BlogsController_uploadEditorImage
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - team-auth: []
+      summary: Upload blog editor image (image files only, stored in Cloudinary)
       tags:
         - Blogs
   /blogs/{id}/publish:

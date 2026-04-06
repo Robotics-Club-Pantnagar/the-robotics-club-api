@@ -193,8 +193,8 @@ model Project {
   id          String          @id @default(cuid())
   title       String
   description String          @db.Text
-  content     Json // Quill JSON content (Delta format)
-  contentHtml String          @db.Text // HTML output from Quill
+  content     Json // Tiptap JSON document
+  contentHtml String          @db.Text // HTML generated from Tiptap content
   imageUrl    String?
   githubRepo  String?
   demoUrl     String?
@@ -228,8 +228,8 @@ model Blog {
   title       String
   slug        String    @unique
   excerpt     String    @db.Text
-  content     Json // Quill JSON content (Delta format)
-  contentHtml String    @db.Text // HTML output from Quill
+  content     Json // Tiptap JSON document
+  contentHtml String    @db.Text // HTML generated from Tiptap content
   coverImage  String?
   authorId    String
   author      Member    @relation(fields: [authorId], references: [id], onDelete: Cascade)

@@ -33,8 +33,9 @@ export class CertificateProcessor extends WorkerHost {
 
       // Upload to Cloudinary
       const publicId = this.cloudinaryService.getCertificatePath(
-        data.eventId,
+        data.eventTitle,
         data.participantId,
+        data.eventYear,
       );
 
       const uploadResult = await this.cloudinaryService.uploadPdfBuffer(

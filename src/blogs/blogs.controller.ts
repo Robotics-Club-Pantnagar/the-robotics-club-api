@@ -7,8 +7,19 @@ import {
   Body,
   Param,
   Query,
+  HttpStatus,
+  ParseFilePipeBuilder,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { BlogsService } from './blogs.service';
 import {
   FindBlogsDto,
@@ -18,6 +29,11 @@ import {
 } from './dto';
 import { TeamMember, CurrentUser } from '../auth/decorators';
 import type { TeamUserPrincipal } from '../auth/types';
+import { ContentViewQueryDto } from '../common/dto/content-view.dto';
+
+type UploadedImageFile = {
+  buffer: Buffer;
+};
 
 @ApiTags('Blogs')
 @Controller('blogs')
@@ -32,8 +48,8 @@ export class BlogsController {
 
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get published blog by slug' })
-  findBySlug(@Param('slug') slug: string) {
-    return this.blogsService.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @Query() query: ContentViewQueryDto) {
+    return this.blogsService.findBySlug(slug, query.contentView ?? 'both');
   }
 
   @Get(':id')
@@ -42,8 +58,17 @@ export class BlogsController {
   @ApiOperation({
     summary: 'Get blog by ID (includes unpublished for author/admin)',
   })
-  findOne(@Param('id') id: string, @CurrentUser() user: TeamUserPrincipal) {
-    return this.blogsService.findOne(id, user.id, user.role === 'admin');
+  findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: TeamUserPrincipal,
+    @Query() query: ContentViewQueryDto,
+  ) {
+    return this.blogsService.findOne(
+      id,
+      user.id,
+      user.role === 'admin',
+      query.contentView ?? 'both',
+    );
   }
 
   @Post()
@@ -55,6 +80,41 @@ export class BlogsController {
     @Body() createBlogDto: CreateBlogDto,
   ) {
     return this.blogsService.create(user.id, createBlogDto);
+  }
+
+  @Post('editor/images')
+  @TeamMember()
+  @ApiBearerAuth('team-auth')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary:
+      'Upload blog editor image (image files only, stored in Cloudinary)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  uploadEditorImage(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/,
+        })
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 })
+        .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+    )
+    file: UploadedImageFile,
+  ) {
+    return this.blogsService.uploadEditorImage(file);
   }
 
   @Patch(':id')

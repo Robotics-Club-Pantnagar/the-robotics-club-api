@@ -184,6 +184,20 @@ Error response:
 }
 ```
 
+## Rich Text Contract (Blogs and Projects)
+
+- Request payloads must send `content` as a Tiptap JSON document.
+- Do not send `contentHtml` in create/update requests.
+- Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
+- Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
+- Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.
+- Supported editor features include open-source Tiptap nodes/marks such as tables, task lists, highlights, underline, subscript/superscript, links, and images.
+- Raw video/audio/file nodes are rejected; only embedded video content is allowed.
+- Upload editor images as files via `POST /blogs/editor/images` or `POST /projects/editor/images` (`multipart/form-data`, field name `file`). The API stores files in Cloudinary and returns the URL.
+- Returned Cloudinary asset URLs are signed.
+- Cloudinary paths follow scoped folders: blog images in `blogs/<year>/...`, project images in `projects/<year>/...`, certificates in `certificates/<year>/<event_name>/<userId>.pdf` where certificate year is taken from the event schedule start year (earliest schedule year for cross-year events).
+- Invalid Tiptap JSON returns a `400 Bad Request` error.
+
 ## Prerequisites
 
 - Node.js 18+

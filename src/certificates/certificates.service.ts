@@ -85,6 +85,7 @@ export class CertificatesService {
         }),
       )
       .join(', ');
+    const eventYear = this.getEventStorageYear(event.schedule);
 
     // Filter participants who don't have certificates yet
     const participantsToProcess = event.participants.filter(
@@ -104,6 +105,7 @@ export class CertificatesService {
       eventId,
       eventTitle: event.title,
       eventDates,
+      eventYear,
       template,
       participants: participantsToProcess.map((ep) => ({
         participantId: ep.participantId,
@@ -166,6 +168,7 @@ export class CertificatesService {
         }),
       )
       .join(', ');
+    const eventYear = this.getEventStorageYear(event.schedule);
 
     // Add reissue job to queue
     const job = await this.queueService.addReissueCertificateJob({
@@ -178,6 +181,7 @@ export class CertificatesService {
       departmentName: registration.participant.department.name,
       eventTitle: event.title,
       eventDates,
+      eventYear,
       template,
       isReissue: true,
     });
@@ -420,5 +424,16 @@ export class CertificatesService {
       .slice(0, 80);
 
     return sanitized || 'certificate';
+  }
+
+  private getEventStorageYear(schedule: Array<{ day: Date }>): number {
+    if (!schedule.length) {
+      return new Date().getFullYear();
+    }
+
+    return schedule.reduce((earliestYear, item) => {
+      const itemYear = new Date(item.day).getFullYear();
+      return Math.min(earliestYear, itemYear);
+    }, Number.POSITIVE_INFINITY);
   }
 }
