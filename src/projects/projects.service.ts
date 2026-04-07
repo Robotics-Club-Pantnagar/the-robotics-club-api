@@ -19,19 +19,28 @@ import sanitizeHtml from 'sanitize-html';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
 import slugify from 'slugify';
+import { ValkeyCacheService } from '../cache';
+import { toUniqueTagSlugs } from '../utils/tag.util';
 
 type UploadedImageFile = {
   buffer: Buffer;
 };
 
 type ProjectResponse = Omit<Project, 'content' | 'contentHtml'> &
-  Partial<Pick<Project, 'content' | 'contentHtml'>>;
+  Partial<Pick<Project, 'content' | 'contentHtml'>> & {
+    tags: string[];
+  };
 
 @Injectable()
 export class ProjectsService {
+  private readonly projectListCachePrefix = 'projects:list:';
+  private readonly projectIdCachePrefix = 'projects:id:';
+  private readonly projectSlugCachePrefix = 'projects:slug:';
+
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
+    private cacheService: ValkeyCacheService,
   ) {}
 
   async findAll(
@@ -47,8 +56,26 @@ export class ProjectsService {
       offset = 0,
     } = query;
     const normalizedContentView = this.normalizeContentView(contentView);
+    const normalizedTags = toUniqueTagSlugs(tags);
+    const cacheKey = this.cacheService.buildKey('projects:list', {
+      search: search ?? null,
+      tags: normalizedTags,
+      memberId: memberId ?? null,
+      slug: slug ?? null,
+      contentView: normalizedContentView,
+      limit,
+      offset,
+    });
 
-    const where: Record<string, unknown> = {};
+    const cached =
+      await this.cacheService.getJson<PaginatedResponse<ProjectResponse>>(
+        cacheKey,
+      );
+    if (cached) {
+      return cached;
+    }
+
+    const where: Prisma.ProjectWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -57,8 +84,16 @@ export class ProjectsService {
       ];
     }
 
-    if (tags && tags.length > 0) {
-      where.tags = { hasSome: tags };
+    if (normalizedTags.length > 0) {
+      where.tags = {
+        some: {
+          tag: {
+            tag: {
+              in: normalizedTags,
+            },
+          },
+        },
+      };
     }
 
     if (memberId) {
@@ -79,23 +114,44 @@ export class ProjectsService {
           members: {
             include: { member: true },
           },
+          tags: {
+            include: {
+              tag: {
+                select: {
+                  tag: true,
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.project.count({ where }),
     ]);
 
-    return {
+    const response: PaginatedResponse<ProjectResponse> = {
       items: items.map((item) =>
-        this.applyContentView(item, normalizedContentView),
+        this.toResponseWithTagSlugs(
+          this.applyContentView(item, normalizedContentView),
+        ),
       ),
       total,
       limit,
       offset,
     };
+
+    await this.cacheService.setJson(cacheKey, response, 120);
+
+    return response;
   }
 
   async findOne(id: string, contentView?: ContentView) {
     const normalizedContentView = this.normalizeContentView(contentView);
+    const cacheKey = this.getProjectByIdCacheKey(id, normalizedContentView);
+    const cached = await this.cacheService.getJson<ProjectResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
@@ -106,25 +162,12 @@ export class ProjectsService {
             },
           },
         },
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundException('Project not found');
-    }
-
-    return this.applyContentView(project, normalizedContentView);
-  }
-
-  async findBySlug(slug: string, contentView?: ContentView) {
-    const normalizedContentView = this.normalizeContentView(contentView);
-    const project = await this.prisma.project.findUnique({
-      where: { slug },
-      include: {
-        members: {
+        tags: {
           include: {
-            member: {
-              include: { college: true, department: true },
+            tag: {
+              select: {
+                tag: true,
+              },
             },
           },
         },
@@ -135,12 +178,62 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
-    return this.applyContentView(project, normalizedContentView);
+    const response = this.toResponseWithTagSlugs(
+      this.applyContentView(project, normalizedContentView),
+    );
+
+    await this.cacheService.setJson(cacheKey, response, 180);
+
+    return response;
+  }
+
+  async findBySlug(slug: string, contentView?: ContentView) {
+    const normalizedContentView = this.normalizeContentView(contentView);
+    const cacheKey = this.getProjectBySlugCacheKey(slug, normalizedContentView);
+    const cached = await this.cacheService.getJson<ProjectResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { slug },
+      include: {
+        members: {
+          include: {
+            member: {
+              include: { college: true, department: true },
+            },
+          },
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const response = this.toResponseWithTagSlugs(
+      this.applyContentView(project, normalizedContentView),
+    );
+
+    await this.cacheService.setJson(cacheKey, response, 180);
+
+    return response;
   }
 
   async create(creatorId: string, data: CreateProjectDto) {
     const sanitizedHtml = this.buildContentHtmlFromTiptap(data.content);
     const slug = await this.generateUniqueSlug(data.title);
+    const normalizedTags = toUniqueTagSlugs(data.tags);
 
     const project = await this.prisma.project.create({
       data: {
@@ -152,7 +245,13 @@ export class ProjectsService {
         imageUrl: data.imageUrl,
         githubRepo: data.githubRepo,
         demoUrl: data.demoUrl,
-        tags: data.tags || [],
+        ...(normalizedTags.length > 0
+          ? {
+              tags: {
+                create: this.buildProjectTagCreateData(normalizedTags),
+              },
+            }
+          : {}),
         members: {
           create: {
             memberId: creatorId,
@@ -162,10 +261,26 @@ export class ProjectsService {
       },
       include: {
         members: { include: { member: true } },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return project;
+    const createdCacheTarget = {
+      id: String(project.id),
+      slug: String(project.slug),
+    };
+
+    await this.invalidateProjectCaches(createdCacheTarget);
+
+    return this.toResponseWithTagSlugs(project);
   }
 
   async update(id: string, requesterId: string, data: UpdateProjectDto) {
@@ -173,34 +288,98 @@ export class ProjectsService {
 
     const existingProject = await this.prisma.project.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, slug: true },
     });
 
     if (!existingProject) {
       throw new NotFoundException('Project not found');
     }
 
-    const updateData: Record<string, unknown> = { ...data };
+    const updateData: Prisma.ProjectUpdateInput = {};
+
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+    }
+
+    if (data.description !== undefined) {
+      updateData.description = data.description;
+    }
+
+    if (data.imageUrl !== undefined) {
+      updateData.imageUrl = data.imageUrl;
+    }
+
+    if (data.githubRepo !== undefined) {
+      updateData.githubRepo = data.githubRepo;
+    }
+
+    if (data.demoUrl !== undefined) {
+      updateData.demoUrl = data.demoUrl;
+    }
+
+    if (data.tags !== undefined) {
+      const normalizedTags = toUniqueTagSlugs(data.tags);
+      updateData.tags = {
+        deleteMany: {},
+        ...(normalizedTags.length > 0
+          ? {
+              create: this.buildProjectTagCreateData(normalizedTags),
+            }
+          : {}),
+      };
+    }
+
     if (data.content) {
+      updateData.content = data.content as Prisma.InputJsonValue;
       updateData.contentHtml = this.buildContentHtmlFromTiptap(data.content);
     }
 
-    return this.prisma.project.update({
+    const updated = await this.prisma.project.update({
       where: { id },
       data: updateData,
       include: {
         members: { include: { member: true } },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    const existingCacheTarget = {
+      id: String(existingProject.id),
+      slug: String(existingProject.slug),
+    };
+
+    await this.invalidateProjectCaches(existingCacheTarget);
+
+    return this.toResponseWithTagSlugs(updated);
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+      select: { id: true, slug: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
     if (!isAdmin) {
       await this.verifyProjectMembership(id, requesterId);
     }
 
-    await this.findOne(id);
-    return this.prisma.project.delete({ where: { id } });
+    const deleted = await this.prisma.project.delete({ where: { id } });
+
+    await this.invalidateProjectCaches(project);
+
+    return deleted;
   }
 
   async updateBySlug(
@@ -238,6 +417,15 @@ export class ProjectsService {
     requesterId: string,
     data: AddProjectMemberDto,
   ) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, slug: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
     await this.verifyProjectMembership(projectId, requesterId);
 
     // Check if member exists
@@ -249,7 +437,7 @@ export class ProjectsService {
       throw new NotFoundException('Member not found');
     }
 
-    return this.prisma.projectMember.create({
+    const created = await this.prisma.projectMember.create({
       data: {
         projectId,
         memberId: data.memberId,
@@ -257,9 +445,22 @@ export class ProjectsService {
       },
       include: { member: true, project: true },
     });
+
+    await this.invalidateProjectCaches(project);
+
+    return created;
   }
 
   async removeMember(projectId: string, memberId: string, requesterId: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true, slug: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
     await this.verifyProjectMembership(projectId, requesterId);
 
     const membership = await this.prisma.projectMember.findUnique({
@@ -270,9 +471,13 @@ export class ProjectsService {
       throw new NotFoundException('Member not in project');
     }
 
-    return this.prisma.projectMember.delete({
+    const deleted = await this.prisma.projectMember.delete({
       where: { id: membership.id },
     });
+
+    await this.invalidateProjectCaches(project);
+
+    return deleted;
   }
 
   async uploadEditorImage(file: UploadedImageFile) {
@@ -304,6 +509,72 @@ export class ProjectsService {
 
   private normalizeContentView(contentView?: ContentView): ContentView {
     return contentView || 'both';
+  }
+
+  private getProjectByIdCacheKey(id: string, contentView: ContentView): string {
+    return `${this.projectIdCachePrefix}${id}:${contentView}`;
+  }
+
+  private getProjectBySlugCacheKey(
+    slug: string,
+    contentView: ContentView,
+  ): string {
+    return `${this.projectSlugCachePrefix}${slug}:${contentView}`;
+  }
+
+  private async invalidateProjectCaches(project?: {
+    id?: string;
+    slug?: string;
+  }): Promise<void> {
+    const invalidations: Array<Promise<void>> = [
+      this.cacheService.deleteByPrefix(this.projectListCachePrefix),
+    ];
+
+    if (project?.id) {
+      invalidations.push(
+        this.cacheService.deleteByPrefix(
+          `${this.projectIdCachePrefix}${project.id}:`,
+        ),
+      );
+    } else {
+      invalidations.push(
+        this.cacheService.deleteByPrefix(this.projectIdCachePrefix),
+      );
+    }
+
+    if (project?.slug) {
+      invalidations.push(
+        this.cacheService.deleteByPrefix(
+          `${this.projectSlugCachePrefix}${project.slug}:`,
+        ),
+      );
+    } else {
+      invalidations.push(
+        this.cacheService.deleteByPrefix(this.projectSlugCachePrefix),
+      );
+    }
+
+    await Promise.all(invalidations);
+  }
+
+  private buildProjectTagCreateData(tagSlugs: string[]) {
+    return tagSlugs.map((tagSlug) => ({
+      tag: {
+        connectOrCreate: {
+          where: { tag: tagSlug },
+          create: { tag: tagSlug },
+        },
+      },
+    }));
+  }
+
+  private toResponseWithTagSlugs<
+    T extends { tags: Array<{ tag: { tag: string } }> },
+  >(item: T): Omit<T, 'tags'> & { tags: string[] } {
+    return {
+      ...item,
+      tags: item.tags.map(({ tag }) => tag.tag),
+    };
   }
 
   private applyContentView<T extends { content: unknown; contentHtml: string }>(

@@ -98,6 +98,12 @@ Participant onboarding behavior:
 - `GET /certificates/my-certificates` (participant)
 - `GET /certificates/events/:eventId/my-certificate` (participant)
 
+### Discovery
+- `GET /discover/by-tags` (public)
+  - Required query param: `tags` (array)
+  - Optional query params: `type=blogs|projects|both`, `limit`, `offset`, `contentView`
+  - Example: `/discover/by-tags?tags=ai&tags=machine-learning&type=both&limit=20&offset=0`
+
 Additional admin utility routes are available for template management and event-scoped generation status.
 
 
@@ -190,11 +196,17 @@ Error response:
 - Do not send `contentHtml` in create/update requests.
 - Slugs for blogs/projects are generated only in the backend from title values (not accepted from client create/update payloads).
 - If a generated slug already exists, backend appends a timestamp suffix to keep it unique.
+- Tags are normalized into relational tables (`tags`, `blog_tags`, `project_tags`) for efficient reuse and querying.
+- `tags` table stores one canonical `tag` value per row (this `tag` is the slug value; there is no separate name/slug pair).
+- Tag normalization is enforced at DB level using a PostgreSQL trigger; API also normalizes incoming values as a fallback.
+- Blog/project list endpoints can be filtered by tag slugs (`tags` query param) for all users.
+- Use repeated query keys to pass tag arrays in GET filters (for example: `?tags=ai&tags=machine-learning`).
 - Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
 - Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
 - Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.
 - Projects support slug-based routes where useful: `GET /projects/slug/:slug`, `PATCH /projects/slug/:slug`, `DELETE /projects/slug/:slug`.
-- Supported editor features include open-source Tiptap nodes/marks such as tables, task lists, highlights, underline, subscript/superscript, links, and images.
+- Supported editor features include: StarterKit (paragraph, heading levels 1-4, bold, italic, strike, inline code, blockquote, horizontal rule, bullet list, ordered list, undo/redo history), underline, link (`autolink` enabled + `openOnClick` disabled), highlight (multicolor), text-style/color, subscript/superscript, text-align (paragraph + heading), CodeBlockLowlight (language-aware code blocks), images, YouTube embeds, resizable tables (row/column/cell/header operations), and nested task lists.
+- Supported code block languages include: plaintext, javascript, typescript, python, java, cpp, csharp, json, html, css, bash, sql.
 - Raw video/audio/file nodes are rejected; only embedded video content is allowed.
 - Upload editor images as files via `POST /blogs/editor/images` or `POST /projects/editor/images` (`multipart/form-data`, field name `file`). The API stores files in Cloudinary and returns the URL.
 - Returned Cloudinary asset URLs are signed.
@@ -205,7 +217,8 @@ Error response:
 
 - Node.js 18+
 - PostgreSQL
-- Redis
+- Redis (BullMQ queue backend)
+- Valkey (application data cache backend)
 - Cloudinary account
 
 ## Environment Variables
@@ -220,8 +233,13 @@ CLERK_TEAM_SECRET_KEY=sk_...
 CLERK_USER_WEBHOOK_SECRET=whsec_...
 CLERK_TEAM_WEBHOOK_SECRET=whsec_...
 
-REDIS_URL=redis://...
-# or REDIS_HOST / REDIS_PORT / REDIS_PASSWORD
+# BullMQ queue Redis (dedicated instance)
+BULLMQ_REDIS_URL=redis://...
+# or BULLMQ_REDIS_HOST / BULLMQ_REDIS_PORT / BULLMQ_REDIS_USERNAME / BULLMQ_REDIS_PASSWORD
+
+# Application cache Valkey (dedicated instance)
+VALKEY_URL=redis://...
+# or VALKEY_HOST / VALKEY_PORT / VALKEY_USERNAME / VALKEY_PASSWORD / VALKEY_DB
 
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
@@ -237,6 +255,12 @@ PORT=3000
 NODE_ENV=development
 AIVEN_CA_B64=...
 ```
+
+## Caching Architecture
+
+- BullMQ uses a dedicated Redis connection via `BULLMQ_REDIS_*`.
+- Application response caching uses a separate Valkey connection via `VALKEY_*`.
+- Blogs and projects list/detail reads are cached in Valkey and invalidated on create/update/delete/publish/member changes.
 
 ## Local Setup
 

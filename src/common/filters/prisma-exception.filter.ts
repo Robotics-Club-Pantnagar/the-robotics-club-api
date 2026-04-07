@@ -95,7 +95,21 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
 
     // Check if this is a PostgreSQL trigger RAISE EXCEPTION
     const errorMessage = exception.message;
+    const isValidationTriggerError =
+      this.isValidationTriggerError(errorMessage);
     const triggerMatch = this.extractTriggerMessage(errorMessage);
+
+    if (triggerMatch && isValidationTriggerError) {
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: triggerMatch,
+        },
+      };
+      response.status(HttpStatus.BAD_REQUEST).json(errorResponse);
+      return;
+    }
 
     if (triggerMatch) {
       const errorResponse: ErrorResponse = {
@@ -118,6 +132,15 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
       },
     };
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
+
+  private isValidationTriggerError(message: string): boolean {
+    const validationPatterns = [
+      /SQLSTATE\s*22023/i,
+      /Tag cannot be empty after normalization/i,
+    ];
+
+    return validationPatterns.some((pattern) => pattern.test(message));
   }
 
   private extractTriggerMessage(message: string): string | null {

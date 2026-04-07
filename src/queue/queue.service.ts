@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job } from 'bullmq';
 import { CERTIFICATE_QUEUE } from './queue.config';
@@ -35,12 +35,16 @@ export interface BulkCertificateJobData {
 }
 
 @Injectable()
-export class QueueService {
+export class QueueService implements OnModuleDestroy {
   private readonly logger = new Logger(QueueService.name);
 
   constructor(
     @InjectQueue(CERTIFICATE_QUEUE) private certificateQueue: Queue,
   ) {}
+
+  async onModuleDestroy(): Promise<void> {
+    await this.certificateQueue.close();
+  }
 
   async addCertificateJob(data: CertificateJobData): Promise<Job> {
     const jobId = `cert-${data.eventId}-${data.participantId}`;

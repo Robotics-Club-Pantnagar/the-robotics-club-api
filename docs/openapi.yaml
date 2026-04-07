@@ -3094,7 +3094,7 @@ paths:
         - name: tags
           required: false
           in: query
-          description: Filter by tags
+          description: 'Filter by tag slugs (for example: ai, machine-learning)'
           schema:
             type: array
             items:
@@ -3185,7 +3185,9 @@ paths:
                               format: uri
                               description: Demo/live URL
                             tags:
-                              description: Project tags
+                              description: >-
+                                Project tags (free-form labels). Backend slugifies and normalizes these into shared
+                                tags.
                               type: array
                               items:
                                 type: string
@@ -3268,7 +3270,7 @@ paths:
                   format: uri
                   description: Demo/live URL
                 tags:
-                  description: Project tags
+                  description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                   type: array
                   items:
                     type: string
@@ -3341,7 +3343,7 @@ paths:
                         format: uri
                         description: Demo/live URL
                       tags:
-                        description: Project tags
+                        description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -3456,7 +3458,7 @@ paths:
                   format: uri
                   description: Demo/live URL
                 tags:
-                  description: Project tags
+                  description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                   type: array
                   items:
                     type: string
@@ -3510,7 +3512,7 @@ paths:
                         format: uri
                         description: Demo/live URL
                       tags:
-                        description: Project tags
+                        description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -3636,7 +3638,7 @@ paths:
                         format: uri
                         description: Demo/live URL
                       tags:
-                        description: Project tags
+                        description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -3703,7 +3705,7 @@ paths:
                   format: uri
                   description: Demo/live URL
                 tags:
-                  description: Project tags
+                  description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                   type: array
                   items:
                     type: string
@@ -3757,7 +3759,7 @@ paths:
                         format: uri
                         description: Demo/live URL
                       tags:
-                        description: Project tags
+                        description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -3835,7 +3837,7 @@ paths:
                         format: uri
                         description: Demo/live URL
                       tags:
-                        description: Project tags
+                        description: Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -4039,7 +4041,7 @@ paths:
         - name: tags
           required: false
           in: query
-          description: Filter by tags
+          description: 'Filter by tag slugs (for example: ai, machine-learning)'
           schema:
             type: array
             items:
@@ -4116,7 +4118,7 @@ paths:
                               format: uri
                               description: Cover image URL
                             tags:
-                              description: Blog tags
+                              description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                               type: array
                               items:
                                 type: string
@@ -4194,7 +4196,7 @@ paths:
                   format: uri
                   description: Cover image URL
                 tags:
-                  description: Blog tags
+                  description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                   type: array
                   items:
                     type: string
@@ -4262,7 +4264,7 @@ paths:
                         format: uri
                         description: Cover image URL
                       tags:
-                        description: Blog tags
+                        description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -4406,7 +4408,7 @@ paths:
                         format: uri
                         description: Cover image URL
                       tags:
-                        description: Blog tags
+                        description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -4470,7 +4472,7 @@ paths:
                   format: uri
                   description: Cover image URL
                 tags:
-                  description: Blog tags
+                  description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                   type: array
                   items:
                     type: string
@@ -4514,7 +4516,7 @@ paths:
                         format: uri
                         description: Cover image URL
                       tags:
-                        description: Blog tags
+                        description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -4582,7 +4584,7 @@ paths:
                         format: uri
                         description: Cover image URL
                       tags:
-                        description: Blog tags
+                        description: Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.
                         type: array
                         items:
                           type: string
@@ -4710,6 +4712,110 @@ paths:
       summary: Publish/unpublish blog post (Author or Admin only)
       tags:
         - Blogs
+  /discover/by-tags:
+    get:
+      operationId: DiscoveryController_findByTags
+      parameters:
+        - name: limit
+          required: false
+          in: query
+          description: Number of items to return
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 20
+            type: number
+        - name: offset
+          required: false
+          in: query
+          description: Number of items to skip
+          schema:
+            minimum: 0
+            default: 0
+            type: number
+        - name: tags
+          required: true
+          in: query
+          description: Array of tags used for filtering content
+          schema:
+            example:
+              - ai
+              - machine-learning
+            type: array
+            items:
+              type: string
+        - name: type
+          required: false
+          in: query
+          description: Which resources to return for the provided tags
+          schema:
+            default: both
+            type: string
+            enum:
+              - blogs
+              - projects
+              - both
+        - name: contentView
+          required: false
+          in: query
+          description: >-
+            Controls rich content fields in response items. both=content+contentHtml, html=only contentHtml, json=only
+            content, none=exclude both.
+          schema:
+            default: html
+            type: string
+            enum:
+              - both
+              - html
+              - json
+              - none
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - items
+                      - total
+                      - limit
+                      - offset
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
+                      total:
+                        type: number
+                        example: 1
+                      limit:
+                        type: number
+                        example: 20
+                      offset:
+                        type: number
+                        example: 0
+              example:
+                success: true
+                data:
+                  items:
+                    - {}
+                  total: 1
+                  limit: 20
+                  offset: 0
+      summary: Get blogs, projects, or both by array of tags
+      tags:
+        - Discovery
   /certificates/events/{eventId}/generate:
     post:
       description: >-

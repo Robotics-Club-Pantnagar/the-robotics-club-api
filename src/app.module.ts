@@ -18,6 +18,8 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { QueueModule } from './queue/queue.module';
+import { CacheModule } from './cache/cache.module';
+import { DiscoveryModule } from './discovery/discovery.module';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { QueueModule } from './queue/queue.module';
     PrismaModule,
     AuthModule,
     ClerkModule,
+    CacheModule,
     CloudinaryModule,
     QueueModule,
     CollegesModule,
@@ -44,6 +47,7 @@ import { QueueModule } from './queue/queue.module';
     PositionsModule,
     ProjectsModule,
     BlogsModule,
+    DiscoveryModule,
     CertificatesModule,
     WebhooksModule,
   ],

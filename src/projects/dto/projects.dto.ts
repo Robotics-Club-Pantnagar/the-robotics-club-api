@@ -19,7 +19,10 @@ export class FindProjectsDto extends PaginationDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by tags', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Filter by tag slugs (for example: ai, machine-learning)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -87,7 +90,11 @@ export class CreateProjectDto {
   @IsUrl()
   demoUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Project tags', type: [String] })
+  @ApiPropertyOptional({
+    description:
+      'Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -129,7 +136,11 @@ export class UpdateProjectDto {
   @IsUrl()
   demoUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Project tags', type: [String] })
+  @ApiPropertyOptional({
+    description:
+      'Project tags (free-form labels). Backend slugifies and normalizes these into shared tags.',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

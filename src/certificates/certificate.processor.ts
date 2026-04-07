@@ -1,5 +1,5 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { Job } from 'bullmq';
 import PDFDocument from 'pdfkit';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,7 +9,10 @@ import { CERTIFICATE_QUEUE } from '../queue/queue.config';
 import { CertificateJobData } from '../queue/queue.service';
 
 @Processor(CERTIFICATE_QUEUE)
-export class CertificateProcessor extends WorkerHost {
+export class CertificateProcessor
+  extends WorkerHost
+  implements OnModuleDestroy
+{
   private readonly logger = new Logger(CertificateProcessor.name);
 
   constructor(
@@ -18,6 +21,14 @@ export class CertificateProcessor extends WorkerHost {
     private templateService: TemplateService,
   ) {
     super();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    try {
+      await this.worker.close();
+    } catch {
+      // Worker might not be initialized in some test bootstrap paths.
+    }
   }
 
   async process(job: Job<CertificateJobData>): Promise<{ url: string }> {
