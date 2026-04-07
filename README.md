@@ -103,6 +103,11 @@ Participant onboarding behavior:
   - Required query param: `tags` (array)
   - Optional query params: `type=blogs|projects|both`, `limit`, `offset`, `contentView`
   - Example: `/discover/by-tags?tags=ai&tags=machine-learning&type=both&limit=20&offset=0`
+- `GET /discover/tags` (member only)
+  - Required query param: `q` (free-text tag query)
+  - Optional query param: `limit` (default `10`, max `25`)
+  - Returns tag suggestions with `tag`, `normalized`, and `popularity`
+  - Example: `/discover/tags?q=mach lea&limit=10`
 
 Additional admin utility routes are available for template management and event-scoped generation status.
 
@@ -201,6 +206,7 @@ Error response:
 - Tag normalization is enforced at DB level using a PostgreSQL trigger; API also normalizes incoming values as a fallback.
 - Blog/project list endpoints can be filtered by tag slugs (`tags` query param) for all users.
 - Use repeated query keys to pass tag arrays in GET filters (for example: `?tags=ai&tags=machine-learning`).
+- For tag autocomplete while writing blogs/projects, teams frontend should call member-only `GET /discover/tags`.
 - Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
 - Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
 - Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.
@@ -261,6 +267,8 @@ AIVEN_CA_B64=...
 - BullMQ uses a dedicated Redis connection via `BULLMQ_REDIS_*`.
 - Application response caching uses a separate Valkey connection via `VALKEY_*`.
 - Blogs and projects list/detail reads are cached in Valkey and invalidated on create/update/delete/publish/member changes.
+- Tag suggestions are stored in Valkey as tag documents (`tag`, `normalized`, `popularity`) and ranked by popularity.
+- Tag suggestion search uses RediSearch when available, with an in-memory fuzzy fallback if RediSearch is not enabled.
 
 ## Local Setup
 

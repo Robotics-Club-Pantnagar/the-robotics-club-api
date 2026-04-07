@@ -72,6 +72,11 @@ export class ValkeyCacheService implements OnModuleDestroy {
     }
   }
 
+  async getClient(): Promise<Redis> {
+    await this.ensureConnected();
+    return this.client;
+  }
+
   async onModuleDestroy(): Promise<void> {
     try {
       if (this.client.status === 'end') {

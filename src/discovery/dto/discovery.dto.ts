@@ -1,5 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsIn, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { PaginationDto } from '../../common/dto';
 import {
   CONTENT_VIEW_VALUES,
@@ -38,4 +48,27 @@ export class FindContentByTagsDto extends PaginationDto {
   @IsOptional()
   @IsIn([...CONTENT_VIEW_VALUES])
   contentView?: ContentView = 'html';
+}
+
+export class SearchTagsDto {
+  @ApiProperty({
+    description: 'Free-text query for tag suggestions',
+    example: 'first thir',
+  })
+  @IsString()
+  @IsNotEmpty()
+  q!: string;
+
+  @ApiPropertyOptional({
+    description: 'Maximum number of tag suggestions to return',
+    default: 10,
+    minimum: 1,
+    maximum: 25,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(25)
+  limit?: number = 10;
 }

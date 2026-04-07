@@ -4816,6 +4816,49 @@ paths:
       summary: Get blogs, projects, or both by array of tags
       tags:
         - Discovery
+  /discover/tags:
+    get:
+      operationId: DiscoveryController_searchTags
+      parameters:
+        - name: q
+          required: true
+          in: query
+          description: Free-text query for tag suggestions
+          schema:
+            example: first thir
+            type: string
+        - name: limit
+          required: false
+          in: query
+          description: Maximum number of tag suggestions to return
+          schema:
+            example: 10
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    additionalProperties: true
+              example:
+                success: true
+                data: {}
+      security:
+        - team-auth: []
+      summary: Search tag suggestions for blog/project editors (member-only endpoint)
+      tags:
+        - Discovery
   /certificates/events/{eventId}/generate:
     post:
       description: >-

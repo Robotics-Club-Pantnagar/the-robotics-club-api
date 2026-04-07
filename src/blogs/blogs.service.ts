@@ -19,7 +19,8 @@ import sanitizeHtml from 'sanitize-html';
 import slugify from 'slugify';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
-import { ValkeyCacheService } from '../cache';
+import { TagSearchIndexService } from '../cache/tag-search-index';
+import { ValkeyCacheService } from '../cache/valkey-cache.service';
 import { toUniqueTagSlugs } from '../utils/tag.util';
 
 type UploadedImageFile = {
@@ -40,6 +41,7 @@ export class BlogsService {
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
     private cacheService: ValkeyCacheService,
+    private tagSearchService: TagSearchIndexService,
   ) {}
 
   async findAll(query: FindBlogsDto): Promise<PaginatedResponse<BlogResponse>> {
@@ -260,6 +262,7 @@ export class BlogsService {
     });
 
     await this.invalidateBlogCaches(slug);
+    await this.tagSearchService.onContentCreated(normalizedTags);
 
     return this.toResponseWithTagSlugs(created);
   }
@@ -270,7 +273,20 @@ export class BlogsService {
     isAdmin: boolean,
     data: UpdateBlogDto,
   ) {
-    const blog = await this.prisma.blog.findUnique({ where: { id } });
+    const blog = await this.prisma.blog.findUnique({
+      where: { id },
+      include: {
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!blog) {
       throw new NotFoundException('Blog not found');
@@ -281,6 +297,8 @@ export class BlogsService {
     }
 
     const updateData: Prisma.BlogUpdateInput = {};
+    let addedTags: string[] = [];
+    let removedTags: string[] = [];
 
     if (data.title !== undefined) {
       updateData.title = data.title;
@@ -296,6 +314,13 @@ export class BlogsService {
 
     if (data.tags !== undefined) {
       const normalizedTags = toUniqueTagSlugs(data.tags);
+      const previousTags = this.extractTagSlugs(blog.tags);
+      const previousTagSet = new Set(previousTags);
+      const nextTagSet = new Set(normalizedTags);
+
+      addedTags = normalizedTags.filter((tag) => !previousTagSet.has(tag));
+      removedTags = previousTags.filter((tag) => !nextTagSet.has(tag));
+
       updateData.tags = {
         deleteMany: {},
         ...(normalizedTags.length > 0
@@ -330,11 +355,28 @@ export class BlogsService {
 
     await this.invalidateBlogCaches(blog.slug);
 
+    if (addedTags.length > 0 || removedTags.length > 0) {
+      await this.tagSearchService.onTagsReconciled(addedTags, removedTags);
+    }
+
     return this.toResponseWithTagSlugs(updated);
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
-    const blog = await this.prisma.blog.findUnique({ where: { id } });
+    const blog = await this.prisma.blog.findUnique({
+      where: { id },
+      include: {
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!blog) {
       throw new NotFoundException('Blog not found');
@@ -347,6 +389,9 @@ export class BlogsService {
     const deleted = await this.prisma.blog.delete({ where: { id } });
 
     await this.invalidateBlogCaches(blog.slug);
+    await this.tagSearchService.onContentDeleted(
+      this.extractTagSlugs(blog.tags),
+    );
 
     return deleted;
   }
@@ -463,6 +508,10 @@ export class BlogsService {
         },
       },
     }));
+  }
+
+  private extractTagSlugs(tags: Array<{ tag: { tag: string } }>): string[] {
+    return tags.map(({ tag }) => tag.tag);
   }
 
   private toResponseWithTagSlugs<

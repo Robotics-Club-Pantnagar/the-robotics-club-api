@@ -19,7 +19,8 @@ import sanitizeHtml from 'sanitize-html';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
 import slugify from 'slugify';
-import { ValkeyCacheService } from '../cache';
+import { TagSearchIndexService } from '../cache/tag-search-index';
+import { ValkeyCacheService } from '../cache/valkey-cache.service';
 import { toUniqueTagSlugs } from '../utils/tag.util';
 
 type UploadedImageFile = {
@@ -41,6 +42,7 @@ export class ProjectsService {
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
     private cacheService: ValkeyCacheService,
+    private tagSearchService: TagSearchIndexService,
   ) {}
 
   async findAll(
@@ -279,6 +281,7 @@ export class ProjectsService {
     };
 
     await this.invalidateProjectCaches(createdCacheTarget);
+    await this.tagSearchService.onContentCreated(normalizedTags);
 
     return this.toResponseWithTagSlugs(project);
   }
@@ -288,7 +291,19 @@ export class ProjectsService {
 
     const existingProject = await this.prisma.project.findUnique({
       where: { id },
-      select: { id: true, slug: true },
+      select: {
+        id: true,
+        slug: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!existingProject) {
@@ -296,6 +311,8 @@ export class ProjectsService {
     }
 
     const updateData: Prisma.ProjectUpdateInput = {};
+    let addedTags: string[] = [];
+    let removedTags: string[] = [];
 
     if (data.title !== undefined) {
       updateData.title = data.title;
@@ -319,6 +336,13 @@ export class ProjectsService {
 
     if (data.tags !== undefined) {
       const normalizedTags = toUniqueTagSlugs(data.tags);
+      const previousTags = this.extractTagSlugs(existingProject.tags);
+      const previousTagSet = new Set(previousTags);
+      const nextTagSet = new Set(normalizedTags);
+
+      addedTags = normalizedTags.filter((tag) => !previousTagSet.has(tag));
+      removedTags = previousTags.filter((tag) => !nextTagSet.has(tag));
+
       updateData.tags = {
         deleteMany: {},
         ...(normalizedTags.length > 0
@@ -358,13 +382,29 @@ export class ProjectsService {
 
     await this.invalidateProjectCaches(existingCacheTarget);
 
+    if (addedTags.length > 0 || removedTags.length > 0) {
+      await this.tagSearchService.onTagsReconciled(addedTags, removedTags);
+    }
+
     return this.toResponseWithTagSlugs(updated);
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
     const project = await this.prisma.project.findUnique({
       where: { id },
-      select: { id: true, slug: true },
+      select: {
+        id: true,
+        slug: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!project) {
@@ -378,6 +418,9 @@ export class ProjectsService {
     const deleted = await this.prisma.project.delete({ where: { id } });
 
     await this.invalidateProjectCaches(project);
+    await this.tagSearchService.onContentDeleted(
+      this.extractTagSlugs(project.tags),
+    );
 
     return deleted;
   }
@@ -566,6 +609,10 @@ export class ProjectsService {
         },
       },
     }));
+  }
+
+  private extractTagSlugs(tags: Array<{ tag: { tag: string } }>): string[] {
+    return tags.map(({ tag }) => tag.tag);
   }
 
   private toResponseWithTagSlugs<

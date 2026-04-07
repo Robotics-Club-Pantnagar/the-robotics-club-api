@@ -1,17 +1,28 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { BlogsService } from '../blogs/blogs.service';
+import {
+  type TagSuggestion,
+  TagSearchIndexService,
+} from '../cache/tag-search-index';
 import { ProjectsService } from '../projects/projects.service';
 import { toUniqueTagSlugs } from '../utils/tag.util';
 import {
   FindContentByTagsDto,
+  SearchTagsDto,
   type TagContentTarget,
 } from './dto/discovery.dto';
+
+export type TagSearchResponse = {
+  query: string;
+  items: TagSuggestion[];
+};
 
 @Injectable()
 export class DiscoveryService {
   constructor(
     private readonly blogsService: BlogsService,
     private readonly projectsService: ProjectsService,
+    private readonly tagSearchService: TagSearchIndexService,
   ) {}
 
   async findByTags(query: FindContentByTagsDto) {
@@ -56,6 +67,18 @@ export class DiscoveryService {
       tags: normalizedTags,
       blogs,
       projects,
+    };
+  }
+
+  async searchTags(query: SearchTagsDto): Promise<TagSearchResponse> {
+    const suggestions = await this.tagSearchService.searchTags(
+      query.q,
+      query.limit ?? 10,
+    );
+
+    return {
+      query: query.q,
+      items: suggestions,
     };
   }
 
