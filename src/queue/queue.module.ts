@@ -11,7 +11,7 @@ import { queueConfig, CERTIFICATE_QUEUE } from './queue.config';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('REDIS_URL');
+        const redisUrl = configService.get<string>('BULLMQ_REDIS_URL');
 
         if (redisUrl) {
           try {
@@ -20,7 +20,9 @@ import { queueConfig, CERTIFICATE_QUEUE } from './queue.config';
               connection: {
                 host: url.hostname,
                 port: parseInt(url.port, 10) || 6379,
+                username: url.username || undefined,
                 password: url.password || undefined,
+                tls: url.protocol === 'rediss:' ? {} : undefined,
               },
             };
           } catch {
@@ -30,9 +32,12 @@ import { queueConfig, CERTIFICATE_QUEUE } from './queue.config';
 
         return {
           connection: {
-            host: configService.get<string>('REDIS_HOST', 'localhost'),
-            port: configService.get<number>('REDIS_PORT', 6379),
-            password: configService.get<string>('REDIS_PASSWORD'),
+            host: configService.get<string>('BULLMQ_REDIS_HOST', 'localhost'),
+            port: configService.get<number>('BULLMQ_REDIS_PORT', 6379),
+            username:
+              configService.get<string>('BULLMQ_REDIS_USERNAME') || undefined,
+            password:
+              configService.get<string>('BULLMQ_REDIS_PASSWORD') || undefined,
           },
         };
       },

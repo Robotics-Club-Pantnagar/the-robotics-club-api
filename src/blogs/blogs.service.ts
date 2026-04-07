@@ -19,19 +19,27 @@ import sanitizeHtml from 'sanitize-html';
 import slugify from 'slugify';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
+import { ValkeyCacheService } from '../cache';
+import { toUniqueTagSlugs } from '../utils/tag.util';
 
 type UploadedImageFile = {
   buffer: Buffer;
 };
 
 type BlogResponse = Omit<Blog, 'content' | 'contentHtml'> &
-  Partial<Pick<Blog, 'content' | 'contentHtml'>>;
+  Partial<Pick<Blog, 'content' | 'contentHtml'>> & {
+    tags: string[];
+  };
 
 @Injectable()
 export class BlogsService {
+  private readonly blogListCachePrefix = 'blogs:list:';
+  private readonly blogSlugCachePrefix = 'blogs:slug:';
+
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
+    private cacheService: ValkeyCacheService,
   ) {}
 
   async findAll(query: FindBlogsDto): Promise<PaginatedResponse<BlogResponse>> {
@@ -44,8 +52,25 @@ export class BlogsService {
       offset = 0,
     } = query;
     const normalizedContentView = this.normalizeContentView(contentView);
+    const normalizedTags = toUniqueTagSlugs(tags);
+    const cacheKey = this.cacheService.buildKey('blogs:list', {
+      search: search ?? null,
+      tags: normalizedTags,
+      authorId: authorId ?? null,
+      contentView: normalizedContentView,
+      limit,
+      offset,
+    });
 
-    const where: Record<string, unknown> = {
+    const cached =
+      await this.cacheService.getJson<PaginatedResponse<BlogResponse>>(
+        cacheKey,
+      );
+    if (cached) {
+      return cached;
+    }
+
+    const where: Prisma.BlogWhereInput = {
       published: true, // Only published blogs for public listing
     };
 
@@ -56,8 +81,16 @@ export class BlogsService {
       ];
     }
 
-    if (tags && tags.length > 0) {
-      where.tags = { hasSome: tags };
+    if (normalizedTags.length > 0) {
+      where.tags = {
+        some: {
+          tag: {
+            tag: {
+              in: normalizedTags,
+            },
+          },
+        },
+      };
     }
 
     if (authorId) {
@@ -74,28 +107,60 @@ export class BlogsService {
           author: {
             select: { id: true, name: true, username: true, imageUrl: true },
           },
+          tags: {
+            include: {
+              tag: {
+                select: {
+                  tag: true,
+                },
+              },
+            },
+          },
         },
       }),
       this.prisma.blog.count({ where }),
     ]);
 
-    return {
+    const response: PaginatedResponse<BlogResponse> = {
       items: items.map((item) =>
-        this.applyContentView(item, normalizedContentView),
+        this.toResponseWithTagSlugs(
+          this.applyContentView(item, normalizedContentView),
+        ),
       ),
       total,
       limit,
       offset,
     };
+
+    await this.cacheService.setJson(cacheKey, response, 120);
+
+    return response;
   }
 
   async findBySlug(slug: string, contentView?: ContentView) {
     const normalizedContentView = this.normalizeContentView(contentView);
+    const cacheKey = this.getBlogBySlugCacheKey(slug, normalizedContentView);
+
+    const cached = await this.cacheService.getJson<BlogResponse>(cacheKey);
+    if (cached) {
+      await this.incrementViewCount(cached.id);
+      return cached;
+    }
+
     const blog = await this.prisma.blog.findFirst({
       where: { slug, published: true },
       include: {
         author: {
           include: { college: true, department: true },
+        },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
         },
       },
     });
@@ -104,13 +169,18 @@ export class BlogsService {
       throw new NotFoundException('Blog not found');
     }
 
-    // Increment view count
-    await this.prisma.blog.update({
-      where: { id: blog.id },
-      data: { views: { increment: 1 } },
-    });
+    await this.incrementViewCount(blog.id);
 
-    return this.applyContentView(blog, normalizedContentView);
+    const response = this.toResponseWithTagSlugs(
+      this.applyContentView(
+        { ...blog, views: blog.views + 1 },
+        normalizedContentView,
+      ),
+    );
+
+    await this.cacheService.setJson(cacheKey, response, 90);
+
+    return response;
   }
 
   async findOne(
@@ -126,6 +196,15 @@ export class BlogsService {
         author: {
           include: { college: true, department: true },
         },
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -137,14 +216,17 @@ export class BlogsService {
       throw new ForbiddenException('You do not have access to this blog');
     }
 
-    return this.applyContentView(blog, normalizedContentView);
+    return this.toResponseWithTagSlugs(
+      this.applyContentView(blog, normalizedContentView),
+    );
   }
 
   async create(authorId: string, data: CreateBlogDto) {
     const slug = await this.generateUniqueSlug(data.title);
     const sanitizedHtml = this.buildContentHtmlFromTiptap(data.content);
+    const normalizedTags = toUniqueTagSlugs(data.tags);
 
-    return this.prisma.blog.create({
+    const created = await this.prisma.blog.create({
       data: {
         title: data.title,
         slug,
@@ -152,13 +234,34 @@ export class BlogsService {
         content: data.content as Prisma.InputJsonValue,
         contentHtml: sanitizedHtml,
         coverImage: data.coverImage,
-        tags: data.tags || [],
+        ...(normalizedTags.length > 0
+          ? {
+              tags: {
+                create: this.buildBlogTagCreateData(normalizedTags),
+              },
+            }
+          : {}),
         published: data.published || false,
         publishedAt: data.published ? new Date() : null,
         authorId,
       },
-      include: { author: true },
+      include: {
+        author: true,
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    await this.invalidateBlogCaches(slug);
+
+    return this.toResponseWithTagSlugs(created);
   }
 
   async update(
@@ -177,17 +280,57 @@ export class BlogsService {
       throw new ForbiddenException('You can only edit your own blogs');
     }
 
-    const updateData: Record<string, unknown> = { ...data };
+    const updateData: Prisma.BlogUpdateInput = {};
+
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+    }
+
+    if (data.excerpt !== undefined) {
+      updateData.excerpt = data.excerpt;
+    }
+
+    if (data.coverImage !== undefined) {
+      updateData.coverImage = data.coverImage;
+    }
+
+    if (data.tags !== undefined) {
+      const normalizedTags = toUniqueTagSlugs(data.tags);
+      updateData.tags = {
+        deleteMany: {},
+        ...(normalizedTags.length > 0
+          ? {
+              create: this.buildBlogTagCreateData(normalizedTags),
+            }
+          : {}),
+      };
+    }
 
     if (data.content) {
+      updateData.content = data.content as Prisma.InputJsonValue;
       updateData.contentHtml = this.buildContentHtmlFromTiptap(data.content);
     }
 
-    return this.prisma.blog.update({
+    const updated = await this.prisma.blog.update({
       where: { id },
       data: updateData,
-      include: { author: true },
+      include: {
+        author: true,
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    await this.invalidateBlogCaches(blog.slug);
+
+    return this.toResponseWithTagSlugs(updated);
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
@@ -201,7 +344,11 @@ export class BlogsService {
       throw new ForbiddenException('You can only delete your own blogs');
     }
 
-    return this.prisma.blog.delete({ where: { id } });
+    const deleted = await this.prisma.blog.delete({ where: { id } });
+
+    await this.invalidateBlogCaches(blog.slug);
+
+    return deleted;
   }
 
   async publish(
@@ -220,14 +367,29 @@ export class BlogsService {
       throw new ForbiddenException('You can only publish your own blogs');
     }
 
-    return this.prisma.blog.update({
+    const updated = await this.prisma.blog.update({
       where: { id },
       data: {
         published: data.published,
         publishedAt: data.published ? new Date() : null,
       },
-      include: { author: true },
+      include: {
+        author: true,
+        tags: {
+          include: {
+            tag: {
+              select: {
+                tag: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    await this.invalidateBlogCaches(blog.slug);
+
+    return this.toResponseWithTagSlugs(updated);
   }
 
   async uploadEditorImage(file: UploadedImageFile) {
@@ -259,6 +421,57 @@ export class BlogsService {
 
   private normalizeContentView(contentView?: ContentView): ContentView {
     return contentView || 'both';
+  }
+
+  private getBlogBySlugCacheKey(
+    slug: string,
+    contentView: ContentView,
+  ): string {
+    return `${this.blogSlugCachePrefix}${slug}:${contentView}`;
+  }
+
+  private async invalidateBlogCaches(slug?: string): Promise<void> {
+    await this.cacheService.deleteByPrefix(this.blogListCachePrefix);
+
+    if (slug) {
+      await this.cacheService.deleteByPrefix(
+        `${this.blogSlugCachePrefix}${slug}:`,
+      );
+      return;
+    }
+
+    await this.cacheService.deleteByPrefix(this.blogSlugCachePrefix);
+  }
+
+  private async incrementViewCount(blogId: string): Promise<void> {
+    try {
+      await this.prisma.blog.update({
+        where: { id: blogId },
+        data: { views: { increment: 1 } },
+      });
+    } catch {
+      // Read path should still succeed even if view counter update fails.
+    }
+  }
+
+  private buildBlogTagCreateData(tagSlugs: string[]) {
+    return tagSlugs.map((tagSlug) => ({
+      tag: {
+        connectOrCreate: {
+          where: { tag: tagSlug },
+          create: { tag: tagSlug },
+        },
+      },
+    }));
+  }
+
+  private toResponseWithTagSlugs<
+    T extends { tags: Array<{ tag: { tag: string } }> },
+  >(item: T): Omit<T, 'tags'> & { tags: string[] } {
+    return {
+      ...item,
+      tags: item.tags.map(({ tag }) => tag.tag),
+    };
   }
 
   private applyContentView<T extends { content: unknown; contentHtml: string }>(

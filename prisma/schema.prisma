@@ -199,13 +199,55 @@ model Project {
   imageUrl    String?
   githubRepo  String?
   demoUrl     String?
-  tags        String[]
+  tags        ProjectTag[]
   members     ProjectMember[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
   @@index([title])
   @@map("projects")
+}
+
+// Normalized tags used across blogs and projects
+model Tag {
+  id        String       @id @default(cuid())
+  tag       String       @unique
+  blogs     BlogTag[]
+  projects  ProjectTag[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("tags")
+}
+
+// Junction table between blogs and tags
+model BlogTag {
+  id        String   @id @default(cuid())
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blogId, tagId])
+  @@index([blogId])
+  @@index([tagId])
+  @@map("blog_tags")
+}
+
+// Junction table between projects and tags
+model ProjectTag {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, tagId])
+  @@index([projectId])
+  @@index([tagId])
+  @@map("project_tags")
 }
 
 // Project Members (Many-to-Many relationship)
@@ -234,7 +276,7 @@ model Blog {
   coverImage  String?
   authorId    String
   author      Member    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  tags        String[]
+  tags        BlogTag[]
   published   Boolean   @default(false)
   publishedAt DateTime?
   views       Int       @default(0)

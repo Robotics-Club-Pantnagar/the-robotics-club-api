@@ -1,4 +1,5 @@
 import { JSONContent, type Extensions } from '@tiptap/core';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import Image from '@tiptap/extension-image';
@@ -15,13 +16,33 @@ import TextAlign from '@tiptap/extension-text-align';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import Youtube from '@tiptap/extension-youtube';
-import { generateHTML } from '@tiptap/html';
+import { generateHTML } from '@tiptap/html/server';
 import StarterKit from '@tiptap/starter-kit';
+import { common, createLowlight } from 'lowlight';
+
+const lowlight = createLowlight(common);
+
+lowlight.registerAlias({
+  javascript: ['js'],
+  typescript: ['ts'],
+  csharp: ['cs', 'c#'],
+  xml: ['html'],
+  shell: ['bash', 'sh'],
+});
 
 const disallowedNodeTypes = new Set(['video', 'audio', 'file']);
 
 const tiptapHtmlExtensions: Extensions = [
-  StarterKit,
+  StarterKit.configure({
+    codeBlock: false,
+    heading: {
+      levels: [1, 2, 3, 4],
+    },
+  }),
+  CodeBlockLowlight.configure({
+    lowlight,
+    defaultLanguage: 'plaintext',
+  }),
   TextStyle,
   Color,
   Highlight.configure({
@@ -31,7 +52,7 @@ const tiptapHtmlExtensions: Extensions = [
   Subscript,
   Superscript,
   Link.configure({
-    autolink: false,
+    autolink: true,
     openOnClick: false,
   }),
   Image.configure({
@@ -42,7 +63,9 @@ const tiptapHtmlExtensions: Extensions = [
   TaskItem.configure({
     nested: true,
   }),
-  Table,
+  Table.configure({
+    resizable: true,
+  }),
   TableRow,
   TableHeader,
   TableCell,

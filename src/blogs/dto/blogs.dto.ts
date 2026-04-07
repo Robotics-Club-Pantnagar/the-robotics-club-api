@@ -20,7 +20,10 @@ export class FindBlogsDto extends PaginationDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by tags', type: [String] })
+  @ApiPropertyOptional({
+    description: 'Filter by tag slugs (for example: ai, machine-learning)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -76,7 +79,11 @@ export class CreateBlogDto {
   @IsUrl()
   coverImage?: string;
 
-  @ApiPropertyOptional({ description: 'Blog tags', type: [String] })
+  @ApiPropertyOptional({
+    description:
+      'Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -113,7 +120,11 @@ export class UpdateBlogDto {
   @IsUrl()
   coverImage?: string;
 
-  @ApiPropertyOptional({ description: 'Blog tags', type: [String] })
+  @ApiPropertyOptional({
+    description:
+      'Blog tags (free-form labels). Backend slugifies and normalizes these into shared tags.',
+    type: [String],
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
