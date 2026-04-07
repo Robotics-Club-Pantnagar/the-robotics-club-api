@@ -5,7 +5,6 @@ import {
   IsObject,
   IsUrl,
   IsIn,
-  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto';
@@ -51,17 +50,6 @@ export class CreateProjectDto {
   @ApiProperty({ description: 'Project title', example: 'Autonomous Robot' })
   @IsString()
   title!: string;
-
-  @ApiPropertyOptional({
-    description: 'URL slug (auto-generated if not provided)',
-    example: 'autonomous-robot',
-  })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  })
-  slug?: string;
 
   @ApiProperty({ description: 'Short project description' })
   @IsString()
@@ -111,14 +99,6 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsString()
   title?: string;
-
-  @ApiPropertyOptional({ description: 'Project slug' })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  })
-  slug?: string;
 
   @ApiPropertyOptional({ description: 'Project description' })
   @IsOptional()

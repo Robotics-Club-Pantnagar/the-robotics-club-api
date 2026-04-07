@@ -141,7 +141,7 @@ export class BlogsService {
   }
 
   async create(authorId: string, data: CreateBlogDto) {
-    const slug = data.slug || (await this.generateUniqueSlug(data.title));
+    const slug = await this.generateUniqueSlug(data.title);
     const sanitizedHtml = this.buildContentHtmlFromTiptap(data.content);
 
     return this.prisma.blog.create({
@@ -181,17 +181,6 @@ export class BlogsService {
 
     if (data.content) {
       updateData.contentHtml = this.buildContentHtmlFromTiptap(data.content);
-    }
-
-    if (data.slug && data.slug !== blog.slug) {
-      // Verify new slug is unique
-      const existing = await this.prisma.blog.findUnique({
-        where: { slug: data.slug },
-      });
-      if (existing && existing.id !== id) {
-        // Append random suffix to make it unique
-        updateData.slug = `${data.slug}-${Date.now()}`;
-      }
     }
 
     return this.prisma.blog.update({
@@ -295,24 +284,36 @@ export class BlogsService {
   }
 
   private async generateUniqueSlug(title: string): Promise<string> {
-    const baseSlug = slugify(title, {
+    const baseSlug = this.toSlug(title);
+    let existing = await this.prisma.blog.findUnique({
+      where: { slug: baseSlug },
+    });
+
+    if (!existing) {
+      return baseSlug;
+    }
+
+    let slug = `${baseSlug}-${Date.now()}`;
+    let counter = 1;
+    existing = await this.prisma.blog.findUnique({ where: { slug } });
+
+    while (existing) {
+      slug = `${baseSlug}-${Date.now()}-${counter}`;
+      counter += 1;
+      existing = await this.prisma.blog.findUnique({ where: { slug } });
+    }
+
+    return slug;
+  }
+
+  private toSlug(input: string): string {
+    const slug = slugify(input, {
       lower: true,
       strict: true,
       remove: /[*+~.()'"!:@]/g,
     });
 
-    // Check if slug exists
-    let slug = baseSlug;
-    let counter = 1;
-    let existing = await this.prisma.blog.findUnique({ where: { slug } });
-
-    while (existing) {
-      slug = `${baseSlug}-${counter}`;
-      existing = await this.prisma.blog.findUnique({ where: { slug } });
-      counter++;
-    }
-
-    return slug;
+    return slug || `blog-${Date.now()}`;
   }
 
   private sanitizeContent(html: string): string {

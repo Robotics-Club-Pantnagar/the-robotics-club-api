@@ -140,7 +140,7 @@ export class ProjectsService {
 
   async create(creatorId: string, data: CreateProjectDto) {
     const sanitizedHtml = this.buildContentHtmlFromTiptap(data.content);
-    const slug = await this.generateUniqueSlug(data.slug || data.title);
+    const slug = await this.generateUniqueSlug(data.title);
 
     const project = await this.prisma.project.create({
       data: {
@@ -173,7 +173,7 @@ export class ProjectsService {
 
     const existingProject = await this.prisma.project.findUnique({
       where: { id },
-      select: { id: true, slug: true },
+      select: { id: true },
     });
 
     if (!existingProject) {
@@ -183,10 +183,6 @@ export class ProjectsService {
     const updateData: Record<string, unknown> = { ...data };
     if (data.content) {
       updateData.contentHtml = this.buildContentHtmlFromTiptap(data.content);
-    }
-
-    if (data.slug && data.slug !== existingProject.slug) {
-      updateData.slug = await this.generateUniqueSlug(data.slug, id);
     }
 
     return this.prisma.project.update({
@@ -332,19 +328,23 @@ export class ProjectsService {
     return { ...rest, content, contentHtml };
   }
 
-  private async generateUniqueSlug(
-    input: string,
-    excludeProjectId?: string,
-  ): Promise<string> {
+  private async generateUniqueSlug(input: string): Promise<string> {
     const baseSlug = this.toSlug(input);
-    let slug = baseSlug;
+    let existing = await this.prisma.project.findUnique({
+      where: { slug: baseSlug },
+    });
+
+    if (!existing) {
+      return baseSlug;
+    }
+
+    let slug = `${baseSlug}-${Date.now()}`;
     let counter = 1;
+    existing = await this.prisma.project.findUnique({ where: { slug } });
 
-    let existing = await this.prisma.project.findUnique({ where: { slug } });
-
-    while (existing && existing.id !== excludeProjectId) {
-      slug = `${baseSlug}-${counter}`;
-      counter++;
+    while (existing) {
+      slug = `${baseSlug}-${Date.now()}-${counter}`;
+      counter += 1;
       existing = await this.prisma.project.findUnique({ where: { slug } });
     }
 

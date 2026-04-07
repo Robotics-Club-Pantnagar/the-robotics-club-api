@@ -188,7 +188,8 @@ Error response:
 
 - Request payloads must send `content` as a Tiptap JSON document.
 - Do not send `contentHtml` in create/update requests.
-- Projects support optional `slug` in create/update payloads (auto-generated from title when omitted).
+- Slugs for blogs/projects are generated only in the backend from title values (not accepted from client create/update payloads).
+- If a generated slug already exists, backend appends a timestamp suffix to keep it unique.
 - Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
 - Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
 - Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.

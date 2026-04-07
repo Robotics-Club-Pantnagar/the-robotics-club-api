@@ -5,7 +5,6 @@ import {
   IsObject,
   IsUrl,
   IsBoolean,
-  Matches,
   IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -51,17 +50,6 @@ export class CreateBlogDto {
   @IsString()
   title!: string;
 
-  @ApiPropertyOptional({
-    description: 'URL slug (auto-generated if not provided)',
-    example: 'getting-started-robotics',
-  })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  })
-  slug?: string;
-
   @ApiProperty({ description: 'Short excerpt/summary' })
   @IsString()
   excerpt!: string;
@@ -105,14 +93,6 @@ export class UpdateBlogDto {
   @IsOptional()
   @IsString()
   title?: string;
-
-  @ApiPropertyOptional({ description: 'URL slug' })
-  @IsOptional()
-  @IsString()
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-  })
-  slug?: string;
 
   @ApiPropertyOptional({ description: 'Short excerpt/summary' })
   @IsOptional()
