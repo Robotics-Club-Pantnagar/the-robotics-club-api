@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto';
+import { Position } from '../../generated/prisma/client';
 import {
   CONTENT_VIEW_VALUES,
   type ContentView,
@@ -159,4 +160,182 @@ export class AddProjectMemberDto {
   @IsOptional()
   @IsString()
   role?: string;
+}
+
+export class ProjectMemberLatestPositionDto {
+  @ApiProperty({ description: 'Position record ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Position title', enum: Position })
+  position!: Position;
+
+  @ApiProperty({ description: 'Start month (1-12)' })
+  startMonth!: number;
+
+  @ApiProperty({ description: 'Start year' })
+  startYear!: number;
+
+  @ApiPropertyOptional({ description: 'End month (1-12, null for ongoing)' })
+  endMonth?: number;
+
+  @ApiPropertyOptional({ description: 'End year (null for ongoing)' })
+  endYear?: number;
+}
+
+export class ProjectMemberCollegeDto {
+  @ApiProperty({ description: 'College ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'College name' })
+  name!: string;
+
+  @ApiProperty({ description: 'College code' })
+  code!: string;
+
+  @ApiPropertyOptional({ description: 'College location' })
+  location?: string;
+}
+
+export class ProjectMemberDepartmentDto {
+  @ApiProperty({ description: 'Department ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Department name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Department code' })
+  code!: string;
+
+  @ApiProperty({ description: 'College ID this department belongs to' })
+  collegeId!: string;
+}
+
+export class ProjectMemberProfileDto {
+  @ApiProperty({ description: 'Member ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Member name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Member username' })
+  username!: string;
+
+  @ApiProperty({ description: 'Profile image URL' })
+  imageUrl!: string;
+
+  @ApiPropertyOptional({ description: 'Member email' })
+  email?: string;
+
+  @ApiPropertyOptional({ description: 'College ID' })
+  collegeId?: string;
+
+  @ApiPropertyOptional({ description: 'Department ID' })
+  departmentId?: string;
+
+  @ApiPropertyOptional({ type: ProjectMemberCollegeDto })
+  college?: ProjectMemberCollegeDto;
+
+  @ApiPropertyOptional({ type: ProjectMemberDepartmentDto })
+  department?: ProjectMemberDepartmentDto;
+
+  @ApiPropertyOptional({
+    type: ProjectMemberLatestPositionDto,
+    description: 'Latest known member position for display on first fetch',
+  })
+  latestPosition?: ProjectMemberLatestPositionDto;
+}
+
+export class ProjectMemberDataDto {
+  @ApiProperty({ description: 'Project membership ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Project ID' })
+  projectId!: string;
+
+  @ApiProperty({ description: 'Member ID' })
+  memberId!: string;
+
+  @ApiPropertyOptional({ description: 'Role in project' })
+  role?: string;
+
+  @ApiProperty({ type: ProjectMemberProfileDto })
+  member!: ProjectMemberProfileDto;
+}
+
+export class ProjectDataDto {
+  @ApiProperty({ description: 'Project ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Project title' })
+  title!: string;
+
+  @ApiProperty({ description: 'Project slug' })
+  slug!: string;
+
+  @ApiProperty({ description: 'Project description' })
+  description!: string;
+
+  @ApiPropertyOptional({ description: 'Rich content (Tiptap JSON)' })
+  content?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Sanitized HTML content' })
+  contentHtml?: string;
+
+  @ApiPropertyOptional({ description: 'Project image URL' })
+  imageUrl?: string;
+
+  @ApiPropertyOptional({ description: 'GitHub repository URL' })
+  githubRepo?: string;
+
+  @ApiPropertyOptional({ description: 'Demo/live URL' })
+  demoUrl?: string;
+
+  @ApiProperty({ type: [String], description: 'Normalized tag slugs' })
+  tags!: string[];
+
+  @ApiProperty({ type: [ProjectMemberDataDto] })
+  members!: ProjectMemberDataDto[];
+
+  @ApiProperty({ description: 'Created timestamp' })
+  createdAt!: string;
+
+  @ApiProperty({ description: 'Updated timestamp' })
+  updatedAt!: string;
+}
+
+export class ProjectsListDataDto {
+  @ApiProperty({ type: [ProjectDataDto] })
+  items!: ProjectDataDto[];
+
+  @ApiProperty({ example: 1 })
+  total!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+
+  @ApiProperty({ example: 0 })
+  offset!: number;
+}
+
+export class ProjectEditorImageUploadDto {
+  @ApiProperty({ description: 'Image URL' })
+  url!: string;
+
+  @ApiProperty({ description: 'Secure Cloudinary URL' })
+  secureUrl!: string;
+
+  @ApiProperty({ description: 'Cloudinary public ID' })
+  publicId!: string;
+
+  @ApiProperty({ description: 'Image width in pixels' })
+  width!: number;
+
+  @ApiProperty({ description: 'Image height in pixels' })
+  height!: number;
+
+  @ApiProperty({ description: 'Image format' })
+  format!: string;
+
+  @ApiProperty({ description: 'Image size in bytes' })
+  bytes!: number;
 }

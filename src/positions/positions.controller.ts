@@ -13,9 +13,16 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiParam,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { PositionsService } from './positions.service';
-import { CreatePositionDto, UpdatePositionDto } from './dto';
+import {
+  CreatePositionDto,
+  UpdatePositionDto,
+  PositionHistoryItemDto,
+  LeadershipPositionItemDto,
+} from './dto';
 import { TeamAdmin } from '../auth/decorators';
 
 @ApiTags('Positions')
@@ -25,6 +32,7 @@ export class PositionsController {
 
   @Get('members/:id/positions')
   @ApiOperation({ summary: 'Get position history for a member' })
+  @ApiOkResponse({ type: PositionHistoryItemDto, isArray: true })
   getPositionHistory(@Param('id') id: string) {
     return this.positionsService.getPositionHistory(id);
   }
@@ -35,6 +43,7 @@ export class PositionsController {
     description:
       'Returns positions where endYear IS NULL AND endMonth IS NULL (ongoing positions)',
   })
+  @ApiOkResponse({ type: LeadershipPositionItemDto, isArray: true })
   getCurrentLeadership() {
     return this.positionsService.getCurrentLeadership();
   }
@@ -50,6 +59,7 @@ export class PositionsController {
     type: Number,
     description: 'Year to query (2000-2100)',
   })
+  @ApiOkResponse({ type: LeadershipPositionItemDto, isArray: true })
   getLeadershipByYear(@Param('year', ParseIntPipe) year: number) {
     return this.positionsService.getLeadershipByYear(year);
   }
@@ -58,6 +68,7 @@ export class PositionsController {
   @TeamAdmin()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Assign position to member (Admin only)' })
+  @ApiCreatedResponse({ type: LeadershipPositionItemDto })
   create(
     @Param('id') memberId: string,
     @Body() createPositionDto: CreatePositionDto,
@@ -69,6 +80,7 @@ export class PositionsController {
   @TeamAdmin()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Update position (Admin only)' })
+  @ApiOkResponse({ type: LeadershipPositionItemDto })
   update(
     @Param('id') id: string,
     @Body() updatePositionDto: UpdatePositionDto,

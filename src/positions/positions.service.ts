@@ -6,9 +6,55 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePositionDto, UpdatePositionDto } from './dto';
 
+type LatestMemberPositionPayload = {
+  id: string;
+  position: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number | null;
+  endYear: number | null;
+};
+
 @Injectable()
 export class PositionsService {
   constructor(private prisma: PrismaService) {}
+
+  private withLatestPositionOnMember<
+    T extends Record<string, unknown> & {
+      positions?: LatestMemberPositionPayload[];
+    },
+  >(
+    member: T,
+  ): Omit<T, 'positions'> & {
+    latestPosition?: LatestMemberPositionPayload;
+  } {
+    const { positions = [], ...rest } = member;
+    const latestPosition = positions[0];
+
+    return {
+      ...rest,
+      ...(latestPosition ? { latestPosition } : {}),
+    };
+  }
+
+  private withMemberLatestPosition<
+    T extends {
+      member: Record<string, unknown> & {
+        positions?: LatestMemberPositionPayload[];
+      };
+    },
+  >(
+    item: T,
+  ): Omit<T, 'member'> & {
+    member: Omit<T['member'], 'positions'> & {
+      latestPosition?: LatestMemberPositionPayload;
+    };
+  } {
+    return {
+      ...item,
+      member: this.withLatestPositionOnMember(item.member),
+    };
+  }
 
   async getPositionHistory(memberId: string) {
     const member = await this.prisma.member.findUnique({
@@ -27,7 +73,7 @@ export class PositionsService {
 
   async getCurrentLeadership() {
     // Returns positions where endYear IS NULL AND endMonth IS NULL (ongoing positions)
-    return this.prisma.memberPosition.findMany({
+    const leadership = await this.prisma.memberPosition.findMany({
       where: {
         endYear: null,
         endMonth: null,
@@ -37,16 +83,30 @@ export class PositionsService {
           include: {
             college: true,
             department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
           },
         },
       },
       orderBy: { position: 'asc' },
     });
+
+    return leadership.map((item) => this.withMemberLatestPosition(item));
   }
 
   async getLeadershipByYear(year: number) {
     // Returns positions where startYear <= year AND (endYear IS NULL OR endYear >= year)
-    return this.prisma.memberPosition.findMany({
+    const leadership = await this.prisma.memberPosition.findMany({
       where: {
         startYear: { lte: year },
         OR: [{ endYear: null }, { endYear: { gte: year } }],
@@ -56,11 +116,25 @@ export class PositionsService {
           include: {
             college: true,
             department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
           },
         },
       },
       orderBy: { position: 'asc' },
     });
+
+    return leadership.map((item) => this.withMemberLatestPosition(item));
   }
 
   async create(memberId: string, data: CreatePositionDto) {
@@ -75,13 +149,34 @@ export class PositionsService {
     // Check for overlap at application layer (DB trigger also enforces)
     await this.checkOverlap(memberId, data, null);
 
-    return this.prisma.memberPosition.create({
+    const created = await this.prisma.memberPosition.create({
       data: {
         memberId,
         ...data,
       },
-      include: { member: true },
+      include: {
+        member: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
+      },
     });
+
+    return this.withMemberLatestPosition(created);
   }
 
   async update(positionId: string, data: UpdatePositionDto) {
@@ -107,11 +202,32 @@ export class PositionsService {
       positionId,
     );
 
-    return this.prisma.memberPosition.update({
+    const updated = await this.prisma.memberPosition.update({
       where: { id: positionId },
       data,
-      include: { member: true },
+      include: {
+        member: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
+      },
     });
+
+    return this.withMemberLatestPosition(updated);
   }
 
   async remove(positionId: string) {

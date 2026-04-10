@@ -27,6 +27,15 @@ type UploadedImageFile = {
   buffer: Buffer;
 };
 
+type LatestMemberPositionPayload = {
+  id: string;
+  position: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number | null;
+  endYear: number | null;
+};
+
 type BlogResponse = Omit<Blog, 'content' | 'contentHtml'> &
   Partial<Pick<Blog, 'content' | 'contentHtml'>> & {
     tags: string[];
@@ -107,7 +116,24 @@ export class BlogsService {
         orderBy: { publishedAt: 'desc' },
         include: {
           author: {
-            select: { id: true, name: true, username: true, imageUrl: true },
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              imageUrl: true,
+              positions: {
+                select: {
+                  id: true,
+                  position: true,
+                  startMonth: true,
+                  startYear: true,
+                  endMonth: true,
+                  endYear: true,
+                },
+                orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                take: 1,
+              },
+            },
           },
           tags: {
             include: {
@@ -126,7 +152,10 @@ export class BlogsService {
     const response: PaginatedResponse<BlogResponse> = {
       items: items.map((item) =>
         this.toResponseWithTagSlugs(
-          this.applyContentView(item, normalizedContentView),
+          this.applyContentView(
+            this.withAuthorLatestPosition(item),
+            normalizedContentView,
+          ),
         ),
       ),
       total,
@@ -153,7 +182,22 @@ export class BlogsService {
       where: { slug, published: true },
       include: {
         author: {
-          include: { college: true, department: true },
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
         },
         tags: {
           include: {
@@ -175,7 +219,7 @@ export class BlogsService {
 
     const response = this.toResponseWithTagSlugs(
       this.applyContentView(
-        { ...blog, views: blog.views + 1 },
+        this.withAuthorLatestPosition({ ...blog, views: blog.views + 1 }),
         normalizedContentView,
       ),
     );
@@ -196,7 +240,22 @@ export class BlogsService {
       where: { id },
       include: {
         author: {
-          include: { college: true, department: true },
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
         },
         tags: {
           include: {
@@ -219,7 +278,10 @@ export class BlogsService {
     }
 
     return this.toResponseWithTagSlugs(
-      this.applyContentView(blog, normalizedContentView),
+      this.applyContentView(
+        this.withAuthorLatestPosition(blog),
+        normalizedContentView,
+      ),
     );
   }
 
@@ -248,7 +310,24 @@ export class BlogsService {
         authorId,
       },
       include: {
-        author: true,
+        author: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -264,7 +343,7 @@ export class BlogsService {
     await this.invalidateBlogCaches(slug);
     await this.tagSearchService.onContentCreated(normalizedTags);
 
-    return this.toResponseWithTagSlugs(created);
+    return this.toResponseWithTagSlugs(this.withAuthorLatestPosition(created));
   }
 
   async update(
@@ -340,7 +419,24 @@ export class BlogsService {
       where: { id },
       data: updateData,
       include: {
-        author: true,
+        author: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -359,7 +455,7 @@ export class BlogsService {
       await this.tagSearchService.onTagsReconciled(addedTags, removedTags);
     }
 
-    return this.toResponseWithTagSlugs(updated);
+    return this.toResponseWithTagSlugs(this.withAuthorLatestPosition(updated));
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
@@ -419,7 +515,24 @@ export class BlogsService {
         publishedAt: data.published ? new Date() : null,
       },
       include: {
-        author: true,
+        author: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -434,7 +547,7 @@ export class BlogsService {
 
     await this.invalidateBlogCaches(blog.slug);
 
-    return this.toResponseWithTagSlugs(updated);
+    return this.toResponseWithTagSlugs(this.withAuthorLatestPosition(updated));
   }
 
   async uploadEditorImage(file: UploadedImageFile) {
@@ -512,6 +625,43 @@ export class BlogsService {
 
   private extractTagSlugs(tags: Array<{ tag: { tag: string } }>): string[] {
     return tags.map(({ tag }) => tag.tag);
+  }
+
+  private withLatestPositionOnMember<
+    T extends Record<string, unknown> & {
+      positions?: LatestMemberPositionPayload[];
+    },
+  >(
+    member: T,
+  ): Omit<T, 'positions'> & {
+    latestPosition?: LatestMemberPositionPayload;
+  } {
+    const { positions = [], ...rest } = member;
+    const latestPosition = positions[0];
+
+    return {
+      ...rest,
+      ...(latestPosition ? { latestPosition } : {}),
+    };
+  }
+
+  private withAuthorLatestPosition<
+    T extends {
+      author: Record<string, unknown> & {
+        positions?: LatestMemberPositionPayload[];
+      };
+    },
+  >(
+    item: T,
+  ): Omit<T, 'author'> & {
+    author: Omit<T['author'], 'positions'> & {
+      latestPosition?: LatestMemberPositionPayload;
+    };
+  } {
+    return {
+      ...item,
+      author: this.withLatestPositionOnMember(item.author),
+    };
   }
 
   private toResponseWithTagSlugs<

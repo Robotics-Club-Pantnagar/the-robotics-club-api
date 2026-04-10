@@ -18,6 +18,8 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProjectsService } from './projects.service';
@@ -26,6 +28,10 @@ import {
   CreateProjectDto,
   UpdateProjectDto,
   AddProjectMemberDto,
+  ProjectDataDto,
+  ProjectsListDataDto,
+  ProjectEditorImageUploadDto,
+  ProjectMemberDataDto,
 } from './dto';
 import { TeamMember, CurrentUser } from '../auth/decorators';
 import type { TeamUserPrincipal } from '../auth/types';
@@ -42,18 +48,21 @@ export class ProjectsController {
 
   @Get()
   @ApiOperation({ summary: 'List all projects with filters' })
+  @ApiOkResponse({ type: ProjectsListDataDto })
   findAll(@Query() query: FindProjectsDto) {
     return this.projectsService.findAll(query);
   }
 
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get project by slug with members' })
+  @ApiOkResponse({ type: ProjectDataDto })
   findBySlug(@Param('slug') slug: string, @Query() query: ContentViewQueryDto) {
     return this.projectsService.findBySlug(slug, query.contentView ?? 'both');
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get project by ID with members' })
+  @ApiOkResponse({ type: ProjectDataDto })
   findOne(@Param('id') id: string, @Query() query: ContentViewQueryDto) {
     return this.projectsService.findOne(id, query.contentView ?? 'both');
   }
@@ -62,6 +71,7 @@ export class ProjectsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Create a new project (Member only)' })
+  @ApiCreatedResponse({ type: ProjectDataDto })
   create(
     @CurrentUser() user: TeamUserPrincipal,
     @Body() createProjectDto: CreateProjectDto,
@@ -77,6 +87,7 @@ export class ProjectsController {
     summary:
       'Upload project editor image (image files only, stored in Cloudinary)',
   })
+  @ApiCreatedResponse({ type: ProjectEditorImageUploadDto })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -108,6 +119,7 @@ export class ProjectsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Update project (Project member only)' })
+  @ApiOkResponse({ type: ProjectDataDto })
   update(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,
@@ -120,6 +132,7 @@ export class ProjectsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Update project by slug (Project member only)' })
+  @ApiOkResponse({ type: ProjectDataDto })
   updateBySlug(
     @Param('slug') slug: string,
     @CurrentUser() user: TeamUserPrincipal,
@@ -157,6 +170,7 @@ export class ProjectsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Add member to project (Project member only)' })
+  @ApiCreatedResponse({ type: ProjectMemberDataDto })
   addMember(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,

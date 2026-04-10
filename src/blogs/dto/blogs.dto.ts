@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto';
+import { Position } from '../../generated/prisma/client';
 import {
   CONTENT_VIEW_VALUES,
   type ContentView,
@@ -137,4 +138,168 @@ export class PublishBlogDto {
   })
   @IsBoolean()
   published!: boolean;
+}
+
+export class BlogAuthorLatestPositionDto {
+  @ApiProperty({ description: 'Position record ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Position title', enum: Position })
+  position!: Position;
+
+  @ApiProperty({ description: 'Start month (1-12)' })
+  startMonth!: number;
+
+  @ApiProperty({ description: 'Start year' })
+  startYear!: number;
+
+  @ApiPropertyOptional({ description: 'End month (1-12, null for ongoing)' })
+  endMonth?: number;
+
+  @ApiPropertyOptional({ description: 'End year (null for ongoing)' })
+  endYear?: number;
+}
+
+export class BlogAuthorCollegeDto {
+  @ApiProperty({ description: 'College ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'College name' })
+  name!: string;
+
+  @ApiProperty({ description: 'College code' })
+  code!: string;
+
+  @ApiPropertyOptional({ description: 'College location' })
+  location?: string;
+}
+
+export class BlogAuthorDepartmentDto {
+  @ApiProperty({ description: 'Department ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Department name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Department code' })
+  code!: string;
+
+  @ApiProperty({ description: 'College ID this department belongs to' })
+  collegeId!: string;
+}
+
+export class BlogAuthorDto {
+  @ApiProperty({ description: 'Member ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Member name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Member username' })
+  username!: string;
+
+  @ApiProperty({ description: 'Profile image URL' })
+  imageUrl!: string;
+
+  @ApiPropertyOptional({ description: 'College ID' })
+  collegeId?: string;
+
+  @ApiPropertyOptional({ description: 'Department ID' })
+  departmentId?: string;
+
+  @ApiPropertyOptional({ type: BlogAuthorCollegeDto })
+  college?: BlogAuthorCollegeDto;
+
+  @ApiPropertyOptional({ type: BlogAuthorDepartmentDto })
+  department?: BlogAuthorDepartmentDto;
+
+  @ApiPropertyOptional({
+    type: BlogAuthorLatestPositionDto,
+    description: 'Latest known member position for lightweight display',
+  })
+  latestPosition?: BlogAuthorLatestPositionDto;
+}
+
+export class BlogDataDto {
+  @ApiProperty({ description: 'Blog ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Blog title' })
+  title!: string;
+
+  @ApiProperty({ description: 'Blog slug' })
+  slug!: string;
+
+  @ApiProperty({ description: 'Blog excerpt' })
+  excerpt!: string;
+
+  @ApiPropertyOptional({ description: 'Rich content (Tiptap JSON)' })
+  content?: Record<string, unknown>;
+
+  @ApiPropertyOptional({ description: 'Sanitized HTML content' })
+  contentHtml?: string;
+
+  @ApiPropertyOptional({ description: 'Cover image URL' })
+  coverImage?: string;
+
+  @ApiProperty({ description: 'Author member ID' })
+  authorId!: string;
+
+  @ApiProperty({ type: BlogAuthorDto })
+  author!: BlogAuthorDto;
+
+  @ApiProperty({ type: [String], description: 'Normalized tag slugs' })
+  tags!: string[];
+
+  @ApiProperty({ description: 'Publish state' })
+  published!: boolean;
+
+  @ApiPropertyOptional({ description: 'Published timestamp' })
+  publishedAt?: string;
+
+  @ApiProperty({ description: 'View count' })
+  views!: number;
+
+  @ApiProperty({ description: 'Created timestamp' })
+  createdAt!: string;
+
+  @ApiProperty({ description: 'Updated timestamp' })
+  updatedAt!: string;
+}
+
+export class BlogsListDataDto {
+  @ApiProperty({ type: [BlogDataDto] })
+  items!: BlogDataDto[];
+
+  @ApiProperty({ example: 1 })
+  total!: number;
+
+  @ApiProperty({ example: 20 })
+  limit!: number;
+
+  @ApiProperty({ example: 0 })
+  offset!: number;
+}
+
+export class BlogEditorImageUploadDto {
+  @ApiProperty({ description: 'Image URL' })
+  url!: string;
+
+  @ApiProperty({ description: 'Secure Cloudinary URL' })
+  secureUrl!: string;
+
+  @ApiProperty({ description: 'Cloudinary public ID' })
+  publicId!: string;
+
+  @ApiProperty({ description: 'Image width in pixels' })
+  width!: number;
+
+  @ApiProperty({ description: 'Image height in pixels' })
+  height!: number;
+
+  @ApiProperty({ description: 'Image format' })
+  format!: string;
+
+  @ApiProperty({ description: 'Image size in bytes' })
+  bytes!: number;
 }

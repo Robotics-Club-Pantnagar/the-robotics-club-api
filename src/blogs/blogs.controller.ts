@@ -18,6 +18,8 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiOkResponse,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { BlogsService } from './blogs.service';
@@ -26,6 +28,9 @@ import {
   CreateBlogDto,
   UpdateBlogDto,
   PublishBlogDto,
+  BlogDataDto,
+  BlogsListDataDto,
+  BlogEditorImageUploadDto,
 } from './dto';
 import { TeamMember, CurrentUser } from '../auth/decorators';
 import type { TeamUserPrincipal } from '../auth/types';
@@ -42,12 +47,14 @@ export class BlogsController {
 
   @Get()
   @ApiOperation({ summary: 'List published blogs with filters' })
+  @ApiOkResponse({ type: BlogsListDataDto })
   findAll(@Query() query: FindBlogsDto) {
     return this.blogsService.findAll(query);
   }
 
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get published blog by slug' })
+  @ApiOkResponse({ type: BlogDataDto })
   findBySlug(@Param('slug') slug: string, @Query() query: ContentViewQueryDto) {
     return this.blogsService.findBySlug(slug, query.contentView ?? 'both');
   }
@@ -58,6 +65,7 @@ export class BlogsController {
   @ApiOperation({
     summary: 'Get blog by ID (includes unpublished for author/admin)',
   })
+  @ApiOkResponse({ type: BlogDataDto })
   findOne(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,
@@ -75,6 +83,7 @@ export class BlogsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Create a new blog post (Member only)' })
+  @ApiCreatedResponse({ type: BlogDataDto })
   create(
     @CurrentUser() user: TeamUserPrincipal,
     @Body() createBlogDto: CreateBlogDto,
@@ -90,6 +99,7 @@ export class BlogsController {
     summary:
       'Upload blog editor image (image files only, stored in Cloudinary)',
   })
+  @ApiCreatedResponse({ type: BlogEditorImageUploadDto })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -121,6 +131,7 @@ export class BlogsController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Update blog post (Author or Admin only)' })
+  @ApiOkResponse({ type: BlogDataDto })
   update(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,
@@ -148,6 +159,7 @@ export class BlogsController {
   @ApiOperation({
     summary: 'Publish/unpublish blog post (Author or Admin only)',
   })
+  @ApiOkResponse({ type: BlogDataDto })
   publish(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,

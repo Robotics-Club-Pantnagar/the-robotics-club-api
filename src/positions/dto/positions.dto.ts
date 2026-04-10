@@ -119,3 +119,117 @@ export class GetLeadershipQueryDto {
   @Max(2100)
   year?: number;
 }
+
+export class PositionMemberLatestPositionDto {
+  @ApiProperty({ description: 'Position record ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Position title', enum: Position })
+  position!: Position;
+
+  @ApiProperty({ description: 'Start month (1-12)' })
+  startMonth!: number;
+
+  @ApiProperty({ description: 'Start year' })
+  startYear!: number;
+
+  @ApiPropertyOptional({ description: 'End month (1-12, null for ongoing)' })
+  endMonth?: number;
+
+  @ApiPropertyOptional({ description: 'End year (null for ongoing)' })
+  endYear?: number;
+}
+
+export class PositionMemberCollegeDto {
+  @ApiProperty({ description: 'College ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'College name' })
+  name!: string;
+
+  @ApiProperty({ description: 'College code' })
+  code!: string;
+
+  @ApiPropertyOptional({ description: 'College location' })
+  location?: string;
+}
+
+export class PositionMemberDepartmentDto {
+  @ApiProperty({ description: 'Department ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Department name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Department code' })
+  code!: string;
+
+  @ApiProperty({ description: 'College ID this department belongs to' })
+  collegeId!: string;
+}
+
+export class PositionMemberSummaryDto {
+  @ApiProperty({ description: 'Member ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Member name' })
+  name!: string;
+
+  @ApiProperty({ description: 'Member email' })
+  email!: string;
+
+  @ApiProperty({ description: 'Member username' })
+  username!: string;
+
+  @ApiProperty({ description: 'Profile image URL' })
+  imageUrl!: string;
+
+  @ApiProperty({ description: 'College ID' })
+  collegeId!: string;
+
+  @ApiProperty({ description: 'Department ID' })
+  departmentId!: string;
+
+  @ApiProperty({ type: PositionMemberCollegeDto })
+  college!: PositionMemberCollegeDto;
+
+  @ApiProperty({ type: PositionMemberDepartmentDto })
+  department!: PositionMemberDepartmentDto;
+
+  @ApiPropertyOptional({
+    type: PositionMemberLatestPositionDto,
+    description: 'Latest known member position for first-load display',
+  })
+  latestPosition?: PositionMemberLatestPositionDto;
+}
+
+export class PositionHistoryItemDto {
+  @ApiProperty({ description: 'Position record ID' })
+  id!: string;
+
+  @ApiProperty({ description: 'Member ID' })
+  memberId!: string;
+
+  @ApiProperty({ description: 'Position title', enum: Position })
+  position!: Position;
+
+  @ApiProperty({ description: 'Start month (1-12)' })
+  startMonth!: number;
+
+  @ApiProperty({ description: 'Start year' })
+  startYear!: number;
+
+  @ApiPropertyOptional({ description: 'End month (1-12, null for ongoing)' })
+  endMonth?: number;
+
+  @ApiPropertyOptional({ description: 'End year (null for ongoing)' })
+  endYear?: number;
+
+  @ApiProperty({ description: 'Created timestamp' })
+  createdAt!: string;
+}
+
+export class LeadershipPositionItemDto extends PositionHistoryItemDto {
+  @ApiProperty({ type: PositionMemberSummaryDto })
+  member!: PositionMemberSummaryDto;
+}

@@ -27,6 +27,15 @@ type UploadedImageFile = {
   buffer: Buffer;
 };
 
+type LatestMemberPositionPayload = {
+  id: string;
+  position: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number | null;
+  endYear: number | null;
+};
+
 type ProjectResponse = Omit<Project, 'content' | 'contentHtml'> &
   Partial<Pick<Project, 'content' | 'contentHtml'>> & {
     tags: string[];
@@ -114,7 +123,26 @@ export class ProjectsService {
         orderBy: { createdAt: 'desc' },
         include: {
           members: {
-            include: { member: true },
+            include: {
+              member: {
+                include: {
+                  college: true,
+                  department: true,
+                  positions: {
+                    select: {
+                      id: true,
+                      position: true,
+                      startMonth: true,
+                      startYear: true,
+                      endMonth: true,
+                      endYear: true,
+                    },
+                    orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                    take: 1,
+                  },
+                },
+              },
+            },
           },
           tags: {
             include: {
@@ -133,7 +161,10 @@ export class ProjectsService {
     const response: PaginatedResponse<ProjectResponse> = {
       items: items.map((item) =>
         this.toResponseWithTagSlugs(
-          this.applyContentView(item, normalizedContentView),
+          this.applyContentView(
+            this.withProjectMembersLatestPosition(item),
+            normalizedContentView,
+          ),
         ),
       ),
       total,
@@ -160,7 +191,22 @@ export class ProjectsService {
         members: {
           include: {
             member: {
-              include: { college: true, department: true },
+              include: {
+                college: true,
+                department: true,
+                positions: {
+                  select: {
+                    id: true,
+                    position: true,
+                    startMonth: true,
+                    startYear: true,
+                    endMonth: true,
+                    endYear: true,
+                  },
+                  orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                  take: 1,
+                },
+              },
             },
           },
         },
@@ -181,7 +227,10 @@ export class ProjectsService {
     }
 
     const response = this.toResponseWithTagSlugs(
-      this.applyContentView(project, normalizedContentView),
+      this.applyContentView(
+        this.withProjectMembersLatestPosition(project),
+        normalizedContentView,
+      ),
     );
 
     await this.cacheService.setJson(cacheKey, response, 180);
@@ -203,7 +252,22 @@ export class ProjectsService {
         members: {
           include: {
             member: {
-              include: { college: true, department: true },
+              include: {
+                college: true,
+                department: true,
+                positions: {
+                  select: {
+                    id: true,
+                    position: true,
+                    startMonth: true,
+                    startYear: true,
+                    endMonth: true,
+                    endYear: true,
+                  },
+                  orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                  take: 1,
+                },
+              },
             },
           },
         },
@@ -224,7 +288,10 @@ export class ProjectsService {
     }
 
     const response = this.toResponseWithTagSlugs(
-      this.applyContentView(project, normalizedContentView),
+      this.applyContentView(
+        this.withProjectMembersLatestPosition(project),
+        normalizedContentView,
+      ),
     );
 
     await this.cacheService.setJson(cacheKey, response, 180);
@@ -262,7 +329,28 @@ export class ProjectsService {
         },
       },
       include: {
-        members: { include: { member: true } },
+        members: {
+          include: {
+            member: {
+              include: {
+                college: true,
+                department: true,
+                positions: {
+                  select: {
+                    id: true,
+                    position: true,
+                    startMonth: true,
+                    startYear: true,
+                    endMonth: true,
+                    endYear: true,
+                  },
+                  orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -283,7 +371,9 @@ export class ProjectsService {
     await this.invalidateProjectCaches(createdCacheTarget);
     await this.tagSearchService.onContentCreated(normalizedTags);
 
-    return this.toResponseWithTagSlugs(project);
+    return this.toResponseWithTagSlugs(
+      this.withProjectMembersLatestPosition(project),
+    );
   }
 
   async update(id: string, requesterId: string, data: UpdateProjectDto) {
@@ -362,7 +452,28 @@ export class ProjectsService {
       where: { id },
       data: updateData,
       include: {
-        members: { include: { member: true } },
+        members: {
+          include: {
+            member: {
+              include: {
+                college: true,
+                department: true,
+                positions: {
+                  select: {
+                    id: true,
+                    position: true,
+                    startMonth: true,
+                    startYear: true,
+                    endMonth: true,
+                    endYear: true,
+                  },
+                  orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
         tags: {
           include: {
             tag: {
@@ -386,7 +497,9 @@ export class ProjectsService {
       await this.tagSearchService.onTagsReconciled(addedTags, removedTags);
     }
 
-    return this.toResponseWithTagSlugs(updated);
+    return this.toResponseWithTagSlugs(
+      this.withProjectMembersLatestPosition(updated),
+    );
   }
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
@@ -486,12 +599,32 @@ export class ProjectsService {
         memberId: data.memberId,
         role: data.role,
       },
-      include: { member: true, project: true },
+      include: {
+        member: {
+          include: {
+            college: true,
+            department: true,
+            positions: {
+              select: {
+                id: true,
+                position: true,
+                startMonth: true,
+                startYear: true,
+                endMonth: true,
+                endYear: true,
+              },
+              orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+              take: 1,
+            },
+          },
+        },
+        project: true,
+      },
     });
 
     await this.invalidateProjectCaches(project);
 
-    return created;
+    return this.withProjectMemberLatestPosition(created);
   }
 
   async removeMember(projectId: string, memberId: string, requesterId: string) {
@@ -613,6 +746,72 @@ export class ProjectsService {
 
   private extractTagSlugs(tags: Array<{ tag: { tag: string } }>): string[] {
     return tags.map(({ tag }) => tag.tag);
+  }
+
+  private withLatestPositionOnMember<
+    T extends Record<string, unknown> & {
+      positions?: LatestMemberPositionPayload[];
+    },
+  >(
+    member: T,
+  ): Omit<T, 'positions'> & {
+    latestPosition?: LatestMemberPositionPayload;
+  } {
+    const { positions = [], ...rest } = member;
+    const latestPosition = positions[0];
+
+    return {
+      ...rest,
+      ...(latestPosition ? { latestPosition } : {}),
+    };
+  }
+
+  private withProjectMemberLatestPosition<
+    T extends {
+      member: Record<string, unknown> & {
+        positions?: LatestMemberPositionPayload[];
+      };
+    },
+  >(
+    item: T,
+  ): Omit<T, 'member'> & {
+    member: Omit<T['member'], 'positions'> & {
+      latestPosition?: LatestMemberPositionPayload;
+    };
+  } {
+    return {
+      ...item,
+      member: this.withLatestPositionOnMember(item.member),
+    };
+  }
+
+  private withProjectMembersLatestPosition<
+    T extends {
+      members: Array<
+        Record<string, unknown> & {
+          member: Record<string, unknown> & {
+            positions?: LatestMemberPositionPayload[];
+          };
+        }
+      >;
+    },
+  >(
+    item: T,
+  ): Omit<T, 'members'> & {
+    members: Array<
+      Omit<T['members'][number], 'member'> & {
+        member: Omit<T['members'][number]['member'], 'positions'> & {
+          latestPosition?: LatestMemberPositionPayload;
+        };
+      }
+    >;
+  } {
+    return {
+      ...item,
+      members: item.members.map((memberRecord) =>
+        this.withProjectMemberLatestPosition(memberRecord),
+      ),
+    };
   }
 
   private toResponseWithTagSlugs<

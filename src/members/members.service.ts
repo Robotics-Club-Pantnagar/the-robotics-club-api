@@ -33,29 +33,6 @@ export class MembersService {
     private clerk: ClerkService,
   ) {}
 
-  private isPositionCurrentlyActive(position: {
-    endYear: number | null;
-    endMonth: number | null;
-  }): boolean {
-    if (position.endYear === null) {
-      return true;
-    }
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-
-    if (position.endYear > currentYear) {
-      return true;
-    }
-
-    if (position.endYear < currentYear) {
-      return false;
-    }
-
-    return position.endMonth === null || position.endMonth >= currentMonth;
-  }
-
   private getCurrentPosition<
     T extends Pick<MemberPositionPayload, 'endYear' | 'endMonth'>,
   >(positions: T[]): T | undefined {
@@ -63,10 +40,8 @@ export class MembersService {
       return undefined;
     }
 
-    return (
-      positions.find((position) => this.isPositionCurrentlyActive(position)) ??
-      positions[0]
-    );
+    // Positions are already sorted newest-first at query time.
+    return positions[0];
   }
 
   private toPositionSummary(
@@ -162,10 +137,6 @@ export class MembersService {
       where.positions = {
         some: {
           position,
-          OR: [
-            { endYear: null },
-            { endYear: { gte: new Date().getFullYear() } },
-          ],
         },
       };
     }
@@ -188,12 +159,6 @@ export class MembersService {
           college: true,
           department: true,
           positions: {
-            where: {
-              OR: [
-                { endYear: null },
-                { endYear: { gte: new Date().getFullYear() } },
-              ],
-            },
             orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
           },
         },
@@ -299,13 +264,9 @@ export class MembersService {
         departmentId: data.departmentId,
         collegeIdNo: data.collegeIdNo,
         graduationYear: data.graduationYear,
-        ...(data.positions?.length
-          ? {
-              positions: {
-                create: data.positions,
-              },
-            }
-          : {}),
+        positions: {
+          create: data.positions,
+        },
       },
       include: {
         college: true,

@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsEnum,
   IsArray,
+  ArrayMinSize,
   ValidateNested,
   Matches,
   IsUrl,
@@ -170,16 +171,17 @@ export class InviteMemberDto {
   @Max(2100)
   graduationYear?: number;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description:
-      'Optional initial position history for the invited member profile',
+      'Initial position history for the invited member profile (at least one entry required)',
     type: [InviteMemberPositionDto],
+    minItems: 1,
   })
-  @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => InviteMemberPositionDto)
-  positions?: InviteMemberPositionDto[];
+  positions!: InviteMemberPositionDto[];
 }
 
 export class UpdateMemberDto {
@@ -356,7 +358,7 @@ export class MemberListItemDto {
 
   @ApiPropertyOptional({
     type: MemberPositionSummaryDto,
-    description: 'Current active position for first/list fetch',
+    description: 'Latest position snapshot for first/list fetch',
   })
   currentPosition?: MemberPositionSummaryDto;
 }

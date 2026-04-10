@@ -1871,13 +1871,13 @@ paths:
               collegeId: string
               departmentId: string
               collegeIdNo: 12345
-              graduationYear: 2025
               positions:
                 - position: EXECUTIVE_MEMBER
                   startMonth: 1
                   startYear: 2024
                   endMonth: 1
                   endYear: 2000
+              graduationYear: 2025
       responses:
         '201':
           description: ''
@@ -1990,7 +1990,24 @@ paths:
               example:
                 success: true
                 data:
-                  - {}
+                  - id: string
+                    memberId: string
+                    position: CHAIRPERSON
+                    startMonth: 1
+                    startYear: 1
+                    createdAt: string
+                    member:
+                      id: string
+                      name: string
+                      email: string
+                      username: string
+                      imageUrl: string
+                      collegeId: string
+                      departmentId: string
+                      college: {}
+                      department: {}
+                    endMonth: 1
+                    endYear: 1
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '429':
@@ -2021,7 +2038,24 @@ paths:
               example:
                 success: true
                 data:
-                  - {}
+                  - id: string
+                    memberId: string
+                    position: CHAIRPERSON
+                    startMonth: 1
+                    startYear: 1
+                    createdAt: string
+                    member:
+                      id: string
+                      name: string
+                      email: string
+                      username: string
+                      imageUrl: string
+                      collegeId: string
+                      departmentId: string
+                      college: {}
+                      department: {}
+                    endMonth: 1
+                    endYear: 1
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '404':
@@ -2064,11 +2098,32 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
+                  memberId: string
                   position: CHAIRPERSON
                   startMonth: 1
-                  startYear: 2000
+                  startYear: 1
+                  createdAt: string
+                  member:
+                    id: string
+                    name: string
+                    email: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
                   endMonth: 1
-                  endYear: 2000
+                  endYear: 1
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2195,19 +2250,20 @@ paths:
                 success: true
                 data:
                   items:
-                    - title: Autonomous Robot
+                    - id: string
+                      title: string
+                      slug: string
                       description: string
-                      content:
-                        type: doc
-                        content:
-                          - type: paragraph
-                            content:
-                              - type: text
-                                text: Built with ROS and OpenCV.
-                      imageUrl: https://example.com/resource
-                      githubRepo: https://example.com/resource
-                      demoUrl: https://example.com/resource
-                      tags: []
+                      tags:
+                        - string
+                      members: []
+                      createdAt: string
+                      updatedAt: string
+                      content: {}
+                      contentHtml: string
+                      imageUrl: string
+                      githubRepo: string
+                      demoUrl: string
                   total: 1
                   limit: 20
                   offset: 0
@@ -2254,20 +2310,25 @@ paths:
               example:
                 success: true
                 data:
-                  title: Autonomous Robot
+                  id: string
+                  title: string
+                  slug: string
                   description: string
-                  content:
-                    type: doc
-                    content:
-                      - type: paragraph
-                        content:
-                          - type: text
-                            text: Built with ROS and OpenCV.
-                  imageUrl: https://example.com/resource
-                  githubRepo: https://example.com/resource
-                  demoUrl: https://example.com/resource
                   tags:
                     - string
+                  members:
+                    - id: string
+                      projectId: string
+                      memberId: string
+                      member: {}
+                      role: string
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: string
+                  githubRepo: string
+                  demoUrl: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2317,7 +2378,26 @@ paths:
                 $ref: '#/components/schemas/ProjectsController_findBySlug_200Response'
               example:
                 success: true
-                data: {}
+                data:
+                  id: string
+                  title: string
+                  slug: string
+                  description: string
+                  tags:
+                    - string
+                  members:
+                    - id: string
+                      projectId: string
+                      memberId: string
+                      member: {}
+                      role: string
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: string
+                  githubRepo: string
+                  demoUrl: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '404':
@@ -2362,14 +2442,25 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
                   title: string
+                  slug: string
                   description: string
-                  content: {}
-                  imageUrl: https://example.com/resource
-                  githubRepo: https://example.com/resource
-                  demoUrl: https://example.com/resource
                   tags:
                     - string
+                  members:
+                    - id: string
+                      projectId: string
+                      memberId: string
+                      member: {}
+                      role: string
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: string
+                  githubRepo: string
+                  demoUrl: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2457,20 +2548,25 @@ paths:
               example:
                 success: true
                 data:
-                  title: Autonomous Robot
+                  id: string
+                  title: string
+                  slug: string
                   description: string
-                  content:
-                    type: doc
-                    content:
-                      - type: paragraph
-                        content:
-                          - type: text
-                            text: Built with ROS and OpenCV.
-                  imageUrl: https://example.com/resource
-                  githubRepo: https://example.com/resource
-                  demoUrl: https://example.com/resource
                   tags:
                     - string
+                  members:
+                    - id: string
+                      projectId: string
+                      memberId: string
+                      member: {}
+                      role: string
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: string
+                  githubRepo: string
+                  demoUrl: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '404':
@@ -2515,14 +2611,25 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
                   title: string
+                  slug: string
                   description: string
-                  content: {}
-                  imageUrl: https://example.com/resource
-                  githubRepo: https://example.com/resource
-                  demoUrl: https://example.com/resource
                   tags:
                     - string
+                  members:
+                    - id: string
+                      projectId: string
+                      memberId: string
+                      member: {}
+                      role: string
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  imageUrl: string
+                  githubRepo: string
+                  demoUrl: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2602,7 +2709,14 @@ paths:
                 $ref: '#/components/schemas/ProjectsController_uploadEditorImage_201Response'
               example:
                 success: true
-                data: {}
+                data:
+                  url: string
+                  secureUrl: string
+                  publicId: string
+                  width: 1
+                  height: 1
+                  format: string
+                  bytes: 1
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2648,8 +2762,28 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
+                  projectId: string
                   memberId: string
-                  role: Lead Developer
+                  member:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    email: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
+                  role: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2776,18 +2910,22 @@ paths:
                 success: true
                 data:
                   items:
-                    - title: Getting Started with Robotics
+                    - id: string
+                      title: string
+                      slug: string
                       excerpt: string
-                      content:
-                        type: doc
-                        content:
-                          - type: paragraph
-                            content:
-                              - type: text
-                                text: Getting started with robotics.
-                      coverImage: https://example.com/resource
-                      tags: []
-                      published: false
+                      authorId: string
+                      author: {}
+                      tags:
+                        - string
+                      published: true
+                      views: 1
+                      createdAt: string
+                      updatedAt: string
+                      content: {}
+                      contentHtml: string
+                      coverImage: string
+                      publishedAt: string
                   total: 1
                   limit: 20
                   offset: 0
@@ -2833,19 +2971,38 @@ paths:
               example:
                 success: true
                 data:
-                  title: Getting Started with Robotics
+                  id: string
+                  title: string
+                  slug: string
                   excerpt: string
-                  content:
-                    type: doc
-                    content:
-                      - type: paragraph
-                        content:
-                          - type: text
-                            text: Getting started with robotics.
-                  coverImage: https://example.com/resource
+                  authorId: string
+                  author:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
                   tags:
                     - string
-                  published: false
+                  published: true
+                  views: 1
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: string
+                  publishedAt: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -2895,7 +3052,39 @@ paths:
                 $ref: '#/components/schemas/BlogsController_findBySlug_200Response'
               example:
                 success: true
-                data: {}
+                data:
+                  id: string
+                  title: string
+                  slug: string
+                  excerpt: string
+                  authorId: string
+                  author:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
+                  tags:
+                    - string
+                  published: true
+                  views: 1
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: string
+                  publishedAt: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '404':
@@ -2940,19 +3129,38 @@ paths:
               example:
                 success: true
                 data:
-                  title: Getting Started with Robotics
+                  id: string
+                  title: string
+                  slug: string
                   excerpt: string
-                  content:
-                    type: doc
-                    content:
-                      - type: paragraph
-                        content:
-                          - type: text
-                            text: Getting started with robotics.
-                  coverImage: https://example.com/resource
+                  authorId: string
+                  author:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
                   tags:
                     - string
-                  published: false
+                  published: true
+                  views: 1
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: string
+                  publishedAt: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -3001,12 +3209,38 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
                   title: string
+                  slug: string
                   excerpt: string
-                  content: {}
-                  coverImage: https://example.com/resource
+                  authorId: string
+                  author:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
                   tags:
                     - string
+                  published: true
+                  views: 1
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: string
+                  publishedAt: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -3086,7 +3320,14 @@ paths:
                 $ref: '#/components/schemas/BlogsController_uploadEditorImage_201Response'
               example:
                 success: true
-                data: {}
+                data:
+                  url: string
+                  secureUrl: string
+                  publicId: string
+                  width: 1
+                  height: 1
+                  format: string
+                  bytes: 1
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -3131,7 +3372,38 @@ paths:
               example:
                 success: true
                 data:
+                  id: string
+                  title: string
+                  slug: string
+                  excerpt: string
+                  authorId: string
+                  author:
+                    id: string
+                    name: string
+                    username: string
+                    imageUrl: string
+                    collegeId: string
+                    departmentId: string
+                    college:
+                      id: string
+                      name: string
+                      code: string
+                      location: string
+                    department:
+                      id: string
+                      name: string
+                      code: string
+                      collegeId: string
+                  tags:
+                    - string
                   published: true
+                  views: 1
+                  createdAt: string
+                  updatedAt: string
+                  content: {}
+                  contentHtml: string
+                  coverImage: string
+                  publishedAt: string
         '400':
           $ref: '#/components/responses/CommonBadRequest'
         '401':
@@ -4430,7 +4702,7 @@ components:
           description: Invitation accepted timestamp
           example: '2026-01-01T10:00:00.000Z'
         currentPosition:
-          description: Current active position for first/list fetch
+          description: Latest position snapshot for first/list fetch
           allOf:
             - $ref: '#/components/schemas/MemberPositionSummaryDto'
       required:
@@ -4529,7 +4801,7 @@ components:
           description: Invitation accepted timestamp
           example: '2026-01-01T10:00:00.000Z'
         currentPosition:
-          description: Current active position for first/list fetch
+          description: Latest position snapshot for first/list fetch
           allOf:
             - $ref: '#/components/schemas/MemberPositionSummaryDto'
         positions:
@@ -4631,7 +4903,8 @@ components:
           description: Expected graduation year
           example: 2025
         positions:
-          description: Optional initial position history for the invited member profile
+          minItems: 1
+          description: Initial position history for the invited member profile (at least one entry required)
           type: array
           items:
             $ref: '#/components/schemas/InviteMemberPositionDto'
@@ -4643,6 +4916,7 @@ components:
         - collegeId
         - departmentId
         - collegeIdNo
+        - positions
     MemberInviteDataDto:
       type: object
       properties:
@@ -4705,7 +4979,7 @@ components:
           description: Invitation accepted timestamp
           example: '2026-01-01T10:00:00.000Z'
         currentPosition:
-          description: Current active position for first/list fetch
+          description: Latest position snapshot for first/list fetch
           allOf:
             - $ref: '#/components/schemas/MemberPositionSummaryDto'
         message:
@@ -4759,6 +5033,211 @@ components:
         github:
           type: string
           description: GitHub username
+    PositionHistoryItemDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Position record ID
+        memberId:
+          type: string
+          description: Member ID
+        position:
+          type: string
+          description: Position title
+          enum:
+            - CHAIRPERSON
+            - VICE_CHAIRPERSON
+            - TREASURER
+            - TECHNICAL_HEAD
+            - CODING_HEAD
+            - LOGISTICS_HEAD
+            - EXECUTIVE_MEMBER
+            - MEMBER
+        startMonth:
+          type: number
+          description: Start month (1-12)
+        startYear:
+          type: number
+          description: Start year
+        endMonth:
+          type: number
+          description: End month (1-12, null for ongoing)
+        endYear:
+          type: number
+          description: End year (null for ongoing)
+        createdAt:
+          type: string
+          description: Created timestamp
+      required:
+        - id
+        - memberId
+        - position
+        - startMonth
+        - startYear
+        - createdAt
+    PositionMemberCollegeDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: College ID
+        name:
+          type: string
+          description: College name
+        code:
+          type: string
+          description: College code
+        location:
+          type: string
+          description: College location
+      required:
+        - id
+        - name
+        - code
+    PositionMemberDepartmentDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Department ID
+        name:
+          type: string
+          description: Department name
+        code:
+          type: string
+          description: Department code
+        collegeId:
+          type: string
+          description: College ID this department belongs to
+      required:
+        - id
+        - name
+        - code
+        - collegeId
+    PositionMemberLatestPositionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Position record ID
+        position:
+          type: string
+          description: Position title
+          enum:
+            - CHAIRPERSON
+            - VICE_CHAIRPERSON
+            - TREASURER
+            - TECHNICAL_HEAD
+            - CODING_HEAD
+            - LOGISTICS_HEAD
+            - EXECUTIVE_MEMBER
+            - MEMBER
+        startMonth:
+          type: number
+          description: Start month (1-12)
+        startYear:
+          type: number
+          description: Start year
+        endMonth:
+          type: number
+          description: End month (1-12, null for ongoing)
+        endYear:
+          type: number
+          description: End year (null for ongoing)
+      required:
+        - id
+        - position
+        - startMonth
+        - startYear
+    PositionMemberSummaryDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Member ID
+        name:
+          type: string
+          description: Member name
+        email:
+          type: string
+          description: Member email
+        username:
+          type: string
+          description: Member username
+        imageUrl:
+          type: string
+          description: Profile image URL
+        collegeId:
+          type: string
+          description: College ID
+        departmentId:
+          type: string
+          description: Department ID
+        college:
+          $ref: '#/components/schemas/PositionMemberCollegeDto'
+        department:
+          $ref: '#/components/schemas/PositionMemberDepartmentDto'
+        latestPosition:
+          description: Latest known member position for first-load display
+          allOf:
+            - $ref: '#/components/schemas/PositionMemberLatestPositionDto'
+      required:
+        - id
+        - name
+        - email
+        - username
+        - imageUrl
+        - collegeId
+        - departmentId
+        - college
+        - department
+    LeadershipPositionItemDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Position record ID
+        memberId:
+          type: string
+          description: Member ID
+        position:
+          type: string
+          description: Position title
+          enum:
+            - CHAIRPERSON
+            - VICE_CHAIRPERSON
+            - TREASURER
+            - TECHNICAL_HEAD
+            - CODING_HEAD
+            - LOGISTICS_HEAD
+            - EXECUTIVE_MEMBER
+            - MEMBER
+        startMonth:
+          type: number
+          description: Start month (1-12)
+        startYear:
+          type: number
+          description: Start year
+        endMonth:
+          type: number
+          description: End month (1-12, null for ongoing)
+        endYear:
+          type: number
+          description: End year (null for ongoing)
+        createdAt:
+          type: string
+          description: Created timestamp
+        member:
+          $ref: '#/components/schemas/PositionMemberSummaryDto'
+      required:
+        - id
+        - memberId
+        - position
+        - startMonth
+        - startYear
+        - createdAt
+        - member
     CreatePositionDto:
       type: object
       properties:
@@ -4835,6 +5314,214 @@ components:
           minimum: 2000
           maximum: 2100
           description: End year
+    ProjectMemberCollegeDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: College ID
+        name:
+          type: string
+          description: College name
+        code:
+          type: string
+          description: College code
+        location:
+          type: string
+          description: College location
+      required:
+        - id
+        - name
+        - code
+    ProjectMemberDepartmentDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Department ID
+        name:
+          type: string
+          description: Department name
+        code:
+          type: string
+          description: Department code
+        collegeId:
+          type: string
+          description: College ID this department belongs to
+      required:
+        - id
+        - name
+        - code
+        - collegeId
+    ProjectMemberLatestPositionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Position record ID
+        position:
+          type: string
+          description: Position title
+          enum:
+            - CHAIRPERSON
+            - VICE_CHAIRPERSON
+            - TREASURER
+            - TECHNICAL_HEAD
+            - CODING_HEAD
+            - LOGISTICS_HEAD
+            - EXECUTIVE_MEMBER
+            - MEMBER
+        startMonth:
+          type: number
+          description: Start month (1-12)
+        startYear:
+          type: number
+          description: Start year
+        endMonth:
+          type: number
+          description: End month (1-12, null for ongoing)
+        endYear:
+          type: number
+          description: End year (null for ongoing)
+      required:
+        - id
+        - position
+        - startMonth
+        - startYear
+    ProjectMemberProfileDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Member ID
+        name:
+          type: string
+          description: Member name
+        username:
+          type: string
+          description: Member username
+        imageUrl:
+          type: string
+          description: Profile image URL
+        email:
+          type: string
+          description: Member email
+        collegeId:
+          type: string
+          description: College ID
+        departmentId:
+          type: string
+          description: Department ID
+        college:
+          $ref: '#/components/schemas/ProjectMemberCollegeDto'
+        department:
+          $ref: '#/components/schemas/ProjectMemberDepartmentDto'
+        latestPosition:
+          description: Latest known member position for display on first fetch
+          allOf:
+            - $ref: '#/components/schemas/ProjectMemberLatestPositionDto'
+      required:
+        - id
+        - name
+        - username
+        - imageUrl
+    ProjectMemberDataDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Project membership ID
+        projectId:
+          type: string
+          description: Project ID
+        memberId:
+          type: string
+          description: Member ID
+        role:
+          type: string
+          description: Role in project
+        member:
+          $ref: '#/components/schemas/ProjectMemberProfileDto'
+      required:
+        - id
+        - projectId
+        - memberId
+        - member
+    ProjectDataDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Project ID
+        title:
+          type: string
+          description: Project title
+        slug:
+          type: string
+          description: Project slug
+        description:
+          type: string
+          description: Project description
+        content:
+          type: object
+          description: Rich content (Tiptap JSON)
+        contentHtml:
+          type: string
+          description: Sanitized HTML content
+        imageUrl:
+          type: string
+          description: Project image URL
+        githubRepo:
+          type: string
+          description: GitHub repository URL
+        demoUrl:
+          type: string
+          description: Demo/live URL
+        tags:
+          description: Normalized tag slugs
+          type: array
+          items:
+            type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectMemberDataDto'
+        createdAt:
+          type: string
+          description: Created timestamp
+        updatedAt:
+          type: string
+          description: Updated timestamp
+      required:
+        - id
+        - title
+        - slug
+        - description
+        - tags
+        - members
+        - createdAt
+        - updatedAt
+    ProjectsListDataDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectDataDto'
+        total:
+          type: number
+          example: 1
+        limit:
+          type: number
+          example: 20
+        offset:
+          type: number
+          example: 0
+      required:
+        - items
+        - total
+        - limit
+        - offset
     CreateProjectDto:
       type: object
       properties:
@@ -4878,6 +5565,38 @@ components:
         - title
         - description
         - content
+    ProjectEditorImageUploadDto:
+      type: object
+      properties:
+        url:
+          type: string
+          description: Image URL
+        secureUrl:
+          type: string
+          description: Secure Cloudinary URL
+        publicId:
+          type: string
+          description: Cloudinary public ID
+        width:
+          type: number
+          description: Image width in pixels
+        height:
+          type: number
+          description: Image height in pixels
+        format:
+          type: string
+          description: Image format
+        bytes:
+          type: number
+          description: Image size in bytes
+      required:
+        - url
+        - secureUrl
+        - publicId
+        - width
+        - height
+        - format
+        - bytes
     UpdateProjectDto:
       type: object
       properties:
@@ -4921,6 +5640,196 @@ components:
           example: Lead Developer
       required:
         - memberId
+    BlogAuthorCollegeDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: College ID
+        name:
+          type: string
+          description: College name
+        code:
+          type: string
+          description: College code
+        location:
+          type: string
+          description: College location
+      required:
+        - id
+        - name
+        - code
+    BlogAuthorDepartmentDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Department ID
+        name:
+          type: string
+          description: Department name
+        code:
+          type: string
+          description: Department code
+        collegeId:
+          type: string
+          description: College ID this department belongs to
+      required:
+        - id
+        - name
+        - code
+        - collegeId
+    BlogAuthorLatestPositionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Position record ID
+        position:
+          type: string
+          description: Position title
+          enum:
+            - CHAIRPERSON
+            - VICE_CHAIRPERSON
+            - TREASURER
+            - TECHNICAL_HEAD
+            - CODING_HEAD
+            - LOGISTICS_HEAD
+            - EXECUTIVE_MEMBER
+            - MEMBER
+        startMonth:
+          type: number
+          description: Start month (1-12)
+        startYear:
+          type: number
+          description: Start year
+        endMonth:
+          type: number
+          description: End month (1-12, null for ongoing)
+        endYear:
+          type: number
+          description: End year (null for ongoing)
+      required:
+        - id
+        - position
+        - startMonth
+        - startYear
+    BlogAuthorDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Member ID
+        name:
+          type: string
+          description: Member name
+        username:
+          type: string
+          description: Member username
+        imageUrl:
+          type: string
+          description: Profile image URL
+        collegeId:
+          type: string
+          description: College ID
+        departmentId:
+          type: string
+          description: Department ID
+        college:
+          $ref: '#/components/schemas/BlogAuthorCollegeDto'
+        department:
+          $ref: '#/components/schemas/BlogAuthorDepartmentDto'
+        latestPosition:
+          description: Latest known member position for lightweight display
+          allOf:
+            - $ref: '#/components/schemas/BlogAuthorLatestPositionDto'
+      required:
+        - id
+        - name
+        - username
+        - imageUrl
+    BlogDataDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Blog ID
+        title:
+          type: string
+          description: Blog title
+        slug:
+          type: string
+          description: Blog slug
+        excerpt:
+          type: string
+          description: Blog excerpt
+        content:
+          type: object
+          description: Rich content (Tiptap JSON)
+        contentHtml:
+          type: string
+          description: Sanitized HTML content
+        coverImage:
+          type: string
+          description: Cover image URL
+        authorId:
+          type: string
+          description: Author member ID
+        author:
+          $ref: '#/components/schemas/BlogAuthorDto'
+        tags:
+          description: Normalized tag slugs
+          type: array
+          items:
+            type: string
+        published:
+          type: boolean
+          description: Publish state
+        publishedAt:
+          type: string
+          description: Published timestamp
+        views:
+          type: number
+          description: View count
+        createdAt:
+          type: string
+          description: Created timestamp
+        updatedAt:
+          type: string
+          description: Updated timestamp
+      required:
+        - id
+        - title
+        - slug
+        - excerpt
+        - authorId
+        - author
+        - tags
+        - published
+        - views
+        - createdAt
+        - updatedAt
+    BlogsListDataDto:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlogDataDto'
+        total:
+          type: number
+          example: 1
+        limit:
+          type: number
+          example: 20
+        offset:
+          type: number
+          example: 0
+      required:
+        - items
+        - total
+        - limit
+        - offset
     CreateBlogDto:
       type: object
       properties:
@@ -4960,6 +5869,38 @@ components:
         - title
         - excerpt
         - content
+    BlogEditorImageUploadDto:
+      type: object
+      properties:
+        url:
+          type: string
+          description: Image URL
+        secureUrl:
+          type: string
+          description: Secure Cloudinary URL
+        publicId:
+          type: string
+          description: Cloudinary public ID
+        width:
+          type: number
+          description: Image width in pixels
+        height:
+          type: number
+          description: Image height in pixels
+        format:
+          type: string
+          description: Image format
+        bytes:
+          type: number
+          description: Image size in bytes
+      required:
+        - url
+        - secureUrl
+        - publicId
+        - width
+        - height
+        - format
+        - bytes
     UpdateBlogDto:
       type: object
       properties:
@@ -5665,8 +6606,9 @@ components:
             data:
               $ref: '#/components/schemas/MembersController_invite_201Data'
     PositionsController_getPositionHistory_200Data:
-      type: object
-      additionalProperties: true
+      type: array
+      items:
+        $ref: '#/components/schemas/PositionHistoryItemDto'
     PositionsController_getPositionHistory_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5677,7 +6619,7 @@ components:
             data:
               $ref: '#/components/schemas/PositionsController_getPositionHistory_200Data'
     PositionsController_create_201Data:
-      $ref: '#/components/schemas/CreatePositionDto'
+      $ref: '#/components/schemas/LeadershipPositionItemDto'
     PositionsController_create_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5690,7 +6632,7 @@ components:
     PositionsController_getCurrentLeadership_200Data:
       type: array
       items:
-        type: object
+        $ref: '#/components/schemas/LeadershipPositionItemDto'
     PositionsController_getCurrentLeadership_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5703,7 +6645,7 @@ components:
     PositionsController_getLeadershipByYear_200Data:
       type: array
       items:
-        type: object
+        $ref: '#/components/schemas/LeadershipPositionItemDto'
     PositionsController_getLeadershipByYear_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5714,7 +6656,7 @@ components:
             data:
               $ref: '#/components/schemas/PositionsController_getLeadershipByYear_200Data'
     PositionsController_update_200Data:
-      $ref: '#/components/schemas/UpdatePositionDto'
+      $ref: '#/components/schemas/LeadershipPositionItemDto'
     PositionsController_update_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5736,19 +6678,8 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/PositionsController_remove_200Data'
-    ProjectsController_findAll_200Item:
-      $ref: '#/components/schemas/CreateProjectDto'
     ProjectsController_findAll_200Data:
-      allOf:
-        - $ref: '#/components/schemas/CommonPaginatedData'
-        - type: object
-          required:
-            - items
-          properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/ProjectsController_findAll_200Item'
+      $ref: '#/components/schemas/ProjectsListDataDto'
     ProjectsController_findAll_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5759,7 +6690,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_findAll_200Data'
     ProjectsController_create_201Data:
-      $ref: '#/components/schemas/CreateProjectDto'
+      $ref: '#/components/schemas/ProjectDataDto'
     ProjectsController_create_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5770,8 +6701,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_create_201Data'
     ProjectsController_findBySlug_200Data:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/ProjectDataDto'
     ProjectsController_findBySlug_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5782,7 +6712,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_findBySlug_200Data'
     ProjectsController_updateBySlug_200Data:
-      $ref: '#/components/schemas/UpdateProjectDto'
+      $ref: '#/components/schemas/ProjectDataDto'
     ProjectsController_updateBySlug_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5805,7 +6735,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_removeBySlug_200Data'
     ProjectsController_findOne_200Data:
-      $ref: '#/components/schemas/CreateProjectDto'
+      $ref: '#/components/schemas/ProjectDataDto'
     ProjectsController_findOne_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5816,7 +6746,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_findOne_200Data'
     ProjectsController_update_200Data:
-      $ref: '#/components/schemas/UpdateProjectDto'
+      $ref: '#/components/schemas/ProjectDataDto'
     ProjectsController_update_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5839,8 +6769,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_remove_200Data'
     ProjectsController_uploadEditorImage_201Data:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/ProjectEditorImageUploadDto'
     ProjectsController_uploadEditorImage_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5851,7 +6780,7 @@ components:
             data:
               $ref: '#/components/schemas/ProjectsController_uploadEditorImage_201Data'
     ProjectsController_addMember_201Data:
-      $ref: '#/components/schemas/AddProjectMemberDto'
+      $ref: '#/components/schemas/ProjectMemberDataDto'
     ProjectsController_addMember_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5873,19 +6802,8 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/ProjectsController_removeMember_200Data'
-    BlogsController_findAll_200Item:
-      $ref: '#/components/schemas/CreateBlogDto'
     BlogsController_findAll_200Data:
-      allOf:
-        - $ref: '#/components/schemas/CommonPaginatedData'
-        - type: object
-          required:
-            - items
-          properties:
-            items:
-              type: array
-              items:
-                $ref: '#/components/schemas/BlogsController_findAll_200Item'
+      $ref: '#/components/schemas/BlogsListDataDto'
     BlogsController_findAll_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5896,7 +6814,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_findAll_200Data'
     BlogsController_create_201Data:
-      $ref: '#/components/schemas/CreateBlogDto'
+      $ref: '#/components/schemas/BlogDataDto'
     BlogsController_create_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5907,8 +6825,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_create_201Data'
     BlogsController_findBySlug_200Data:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/BlogDataDto'
     BlogsController_findBySlug_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5919,7 +6836,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_findBySlug_200Data'
     BlogsController_findOne_200Data:
-      $ref: '#/components/schemas/CreateBlogDto'
+      $ref: '#/components/schemas/BlogDataDto'
     BlogsController_findOne_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5930,7 +6847,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_findOne_200Data'
     BlogsController_update_200Data:
-      $ref: '#/components/schemas/UpdateBlogDto'
+      $ref: '#/components/schemas/BlogDataDto'
     BlogsController_update_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5953,8 +6870,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_remove_200Data'
     BlogsController_uploadEditorImage_201Data:
-      type: object
-      additionalProperties: true
+      $ref: '#/components/schemas/BlogEditorImageUploadDto'
     BlogsController_uploadEditorImage_201Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
@@ -5965,7 +6881,7 @@ components:
             data:
               $ref: '#/components/schemas/BlogsController_uploadEditorImage_201Data'
     BlogsController_publish_200Data:
-      $ref: '#/components/schemas/PublishBlogDto'
+      $ref: '#/components/schemas/BlogDataDto'
     BlogsController_publish_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'

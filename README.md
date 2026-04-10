@@ -122,13 +122,14 @@ Additional admin utility routes are available for template management and event-
     - `true` => invited/pending members only
     - `false` => accepted members only
   - Other filters (`search`, `position`, `collegeId`, `departmentId`, `graduationYear`) continue to apply.
-  - List payload includes both relationship IDs (`collegeId`, `departmentId`) and nested relation objects (`college`, `department`), and returns only `currentPosition` for fast first-load rendering.
+  - List payload includes both relationship IDs (`collegeId`, `departmentId`) and nested relation objects (`college`, `department`), and returns a single `currentPosition` snapshot from the latest member position record for fast first-load rendering.
   - Invitation state in list/detail payloads is `acceptedInvitation`.
 - `GET /members/:id`
   - Returns full member profile and complete `positions[]` history (on-demand detail fetch).
+- Position leadership endpoints (`GET /positions/current`, `GET /positions/year/:year`, and admin create/update position responses) include nested `member.latestPosition` with `startYear` and optional `endYear` for consistent role badges.
 - `POST /members/invite` (admin)
 - Invite creates a pending member record immediately (invitation ID as temporary ID).
-- Invite payload supports optional initial position history via `positions[]` entries:
+- Invite payload requires initial position history via `positions[]` (minimum one entry):
   - `position`, `startMonth`, `startYear`, optional `endMonth`, optional `endYear`
 - On Clerk `user.created` (team webhook), backend activates and updates the pending member record.
 - On Clerk `user.updated` (team webhook), backend syncs Clerk-managed fields only (name/email/username/imageUrl).
@@ -225,6 +226,7 @@ Error response:
 - Backend converts Tiptap JSON to HTML, sanitizes it, and stores the result in `contentHtml`.
 - Read endpoints support `contentView` query param to control rich payload fields: `both`, `html`, `json`, or `none`.
 - Optimized defaults: list endpoints default to `html`; detail endpoints default to `both`.
+- Blog `author` and project `members[].member` responses include `latestPosition` (with `startYear` and optional `endYear`) for first-load profile badges.
 - Projects support slug-based routes where useful: `GET /projects/slug/:slug`, `PATCH /projects/slug/:slug`, `DELETE /projects/slug/:slug`.
 - Supported editor features include: StarterKit (paragraph, heading levels 1-4, bold, italic, strike, inline code, blockquote, horizontal rule, bullet list, ordered list, undo/redo history), underline, link (`autolink` enabled + `openOnClick` disabled), highlight (multicolor), text-style/color, subscript/superscript, text-align (paragraph + heading), CodeBlockLowlight (language-aware code blocks), images, YouTube embeds, resizable tables (row/column/cell/header operations), and nested task lists.
 - Supported code block languages include: plaintext, javascript, typescript, python, java, cpp, csharp, json, html, css, bash, sql.
