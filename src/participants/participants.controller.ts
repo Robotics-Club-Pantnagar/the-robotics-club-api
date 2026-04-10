@@ -1,7 +1,18 @@
 import { Controller, Get, Post, Patch, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+} from '@nestjs/swagger';
 import { ParticipantsService } from './participants.service';
-import { CreateParticipantDto, UpdateParticipantDto } from './dto';
+import {
+  CreateParticipantDto,
+  UpdateParticipantDto,
+  ParticipantProfileDto,
+  ParticipantRegisteredEventDto,
+} from './dto';
 import { UserAuth, CurrentUser } from '../auth/decorators';
 import type { UserPrincipal } from '../auth/types';
 
@@ -14,6 +25,7 @@ export class ParticipantsController {
   @UserAuth()
   @ApiBearerAuth('user-auth')
   @ApiOperation({ summary: 'Get current participant profile' })
+  @ApiOkResponse({ type: ParticipantProfileDto })
   getMe(@CurrentUser() user: UserPrincipal) {
     return this.participantsService.findByClerkId(user.id);
   }
@@ -26,6 +38,7 @@ export class ParticipantsController {
     description:
       'Creates participant profile using Clerk JWT (Authorization header) and signup fields from request body.',
   })
+  @ApiCreatedResponse({ type: ParticipantProfileDto })
   createProfile(
     @CurrentUser() user: UserPrincipal,
     @Body() createParticipantDto: CreateParticipantDto,
@@ -37,6 +50,7 @@ export class ParticipantsController {
   @UserAuth()
   @ApiBearerAuth('user-auth')
   @ApiOperation({ summary: 'Update participant profile' })
+  @ApiOkResponse({ type: ParticipantProfileDto })
   updateProfile(
     @CurrentUser() user: UserPrincipal,
     @Body() updateParticipantDto: UpdateParticipantDto,
@@ -48,12 +62,14 @@ export class ParticipantsController {
   @UserAuth()
   @ApiBearerAuth('user-auth')
   @ApiOperation({ summary: 'Get events registered by current participant' })
+  @ApiOkResponse({ type: [ParticipantRegisteredEventDto] })
   getMyEvents(@CurrentUser() user: UserPrincipal) {
     return this.participantsService.getRegisteredEvents(user.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get participant public profile by ID' })
+  @ApiOkResponse({ type: ParticipantProfileDto })
   findOne(@Param('id') id: string) {
     return this.participantsService.findOne(id);
   }

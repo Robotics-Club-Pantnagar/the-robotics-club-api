@@ -8,9 +8,22 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+} from '@nestjs/swagger';
 import { MembersService } from './members.service';
-import { FindMembersDto, InviteMemberDto, UpdateMemberDto } from './dto';
+import {
+  FindMembersDto,
+  InviteMemberDto,
+  UpdateMemberDto,
+  MemberDetailDto,
+  MembersListDataDto,
+  MemberInviteDataDto,
+} from './dto/members.dto';
 import { TeamAdmin, TeamMember, CurrentUser } from '../auth/decorators';
 import type { TeamUserPrincipal } from '../auth/types';
 
@@ -21,12 +34,14 @@ export class MembersController {
 
   @Get()
   @ApiOperation({ summary: 'List all club members with filters' })
+  @ApiOkResponse({ type: MembersListDataDto })
   findAll(@Query() query: FindMembersDto) {
     return this.membersService.findAll(query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get member by ID with positions' })
+  @ApiOkResponse({ type: MemberDetailDto })
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);
   }
@@ -39,6 +54,7 @@ export class MembersController {
     description:
       'Sends a Clerk invitation and creates a pending member profile immediately. After invite acceptance, Clerk user.created updates and activates that profile.',
   })
+  @ApiCreatedResponse({ type: MemberInviteDataDto })
   invite(@Body() inviteMemberDto: InviteMemberDto) {
     return this.membersService.invite(inviteMemberDto);
   }
@@ -47,6 +63,7 @@ export class MembersController {
   @TeamMember()
   @ApiBearerAuth('team-auth')
   @ApiOperation({ summary: 'Update member profile (Self or Admin)' })
+  @ApiOkResponse({ type: MemberDetailDto })
   update(
     @Param('id') id: string,
     @CurrentUser() user: TeamUserPrincipal,

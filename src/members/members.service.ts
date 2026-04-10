@@ -9,8 +9,6 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ClerkService } from '../clerk/clerk.service';
 import { FindMembersDto, InviteMemberDto, UpdateMemberDto } from './dto';
-import { PaginatedResponse } from '../common/dto';
-import { Member } from '../generated/prisma/client';
 
 export interface MemberClerkProfileSyncPayload {
   name: string;
@@ -19,6 +17,15 @@ export interface MemberClerkProfileSyncPayload {
   imageUrl?: string;
 }
 
+type MemberPositionPayload = {
+  id: string;
+  position: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number | null;
+  endYear: number | null;
+};
+
 @Injectable()
 export class MembersService {
   constructor(
@@ -26,21 +33,122 @@ export class MembersService {
     private clerk: ClerkService,
   ) {}
 
-  async findAll(query: FindMembersDto): Promise<PaginatedResponse<Member>> {
+  private isPositionCurrentlyActive(position: {
+    endYear: number | null;
+    endMonth: number | null;
+  }): boolean {
+    if (position.endYear === null) {
+      return true;
+    }
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    if (position.endYear > currentYear) {
+      return true;
+    }
+
+    if (position.endYear < currentYear) {
+      return false;
+    }
+
+    return position.endMonth === null || position.endMonth >= currentMonth;
+  }
+
+  private getCurrentPosition<
+    T extends Pick<MemberPositionPayload, 'endYear' | 'endMonth'>,
+  >(positions: T[]): T | undefined {
+    if (positions.length === 0) {
+      return undefined;
+    }
+
+    return (
+      positions.find((position) => this.isPositionCurrentlyActive(position)) ??
+      positions[0]
+    );
+  }
+
+  private toPositionSummary(
+    position: MemberPositionPayload,
+  ): MemberPositionPayload {
+    return {
+      id: position.id,
+      position: position.position,
+      startMonth: position.startMonth,
+      startYear: position.startYear,
+      endMonth: position.endMonth,
+      endYear: position.endYear,
+    };
+  }
+
+  private formatMemberListResponse<
+    P extends MemberPositionPayload,
+    T extends {
+      invitationAccepted: boolean;
+      positions: P[];
+    } & Record<string, unknown>,
+  >(
+    member: T,
+  ): Omit<T, 'invitationAccepted' | 'positions'> & {
+    acceptedInvitation: boolean;
+    currentPosition?: MemberPositionPayload;
+  } {
+    const { invitationAccepted, positions, ...rest } = member;
+    const currentPosition = this.getCurrentPosition(positions);
+    const currentPositionSummary = currentPosition
+      ? this.toPositionSummary(currentPosition)
+      : undefined;
+
+    return {
+      ...rest,
+      acceptedInvitation: invitationAccepted,
+      ...(currentPositionSummary
+        ? { currentPosition: currentPositionSummary }
+        : {}),
+    };
+  }
+
+  private formatMemberDetailResponse<
+    T extends {
+      invitationAccepted: boolean;
+      positions?: MemberPositionPayload[];
+    } & Record<string, unknown>,
+  >(
+    member: T,
+  ): Omit<T, 'invitationAccepted'> & {
+    acceptedInvitation: boolean;
+  } {
+    const { invitationAccepted, positions, ...rest } = member;
+    const normalizedRest = {
+      ...rest,
+    } as Record<string, unknown>;
+
+    if (Array.isArray(positions)) {
+      normalizedRest.positions = positions.map((position) =>
+        this.toPositionSummary(position),
+      );
+    }
+
+    return {
+      ...(normalizedRest as Omit<T, 'invitationAccepted'>),
+      acceptedInvitation: invitationAccepted,
+    };
+  }
+
+  async findAll(query: FindMembersDto) {
     const {
       search,
       position,
       collegeId,
       departmentId,
       graduationYear,
+      invited,
       limit = 20,
       offset = 0,
     } = query;
 
-    const where: Record<string, unknown> = {
-      // Hide invited-but-unaccepted rows created with invitation IDs.
-      NOT: { id: { startsWith: 'inv_' } },
-    };
+    const where: Record<string, unknown> = {};
 
     if (search) {
       where.OR = [
@@ -65,6 +173,10 @@ export class MembersService {
     if (collegeId) where.collegeId = collegeId;
     if (departmentId) where.departmentId = departmentId;
     if (graduationYear) where.graduationYear = graduationYear;
+    if (typeof invited === 'boolean') {
+      // invited=true -> pending rows; invited=false -> accepted profiles
+      where.invitationAccepted = !invited;
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.member.findMany({
@@ -89,7 +201,11 @@ export class MembersService {
       this.prisma.member.count({ where }),
     ]);
 
-    return { items, total, limit, offset };
+    const formattedItems = items.map((item) =>
+      this.formatMemberListResponse(item),
+    );
+
+    return { items: formattedItems, total, limit, offset };
   }
 
   async findOne(id: string) {
@@ -117,7 +233,7 @@ export class MembersService {
       throw new NotFoundException('Member not found');
     }
 
-    return member;
+    return this.formatMemberDetailResponse(member);
   }
 
   async findByClerkId(clerkId: string) {
@@ -183,15 +299,25 @@ export class MembersService {
         departmentId: data.departmentId,
         collegeIdNo: data.collegeIdNo,
         graduationYear: data.graduationYear,
+        ...(data.positions?.length
+          ? {
+              positions: {
+                create: data.positions,
+              },
+            }
+          : {}),
       },
       include: {
         college: true,
         department: true,
+        positions: {
+          orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+        },
       },
     });
 
     return {
-      ...member,
+      ...this.formatMemberListResponse(member),
       message:
         'Invitation sent successfully. Member profile is in pending state until invitation acceptance.',
     };
@@ -307,18 +433,24 @@ export class MembersService {
     requesterId: string,
     isAdmin: boolean,
   ) {
-    const member = await this.findOne(id);
+    const existingMember = await this.prisma.member.findUnique({
+      where: { id },
+    });
+
+    if (!existingMember) {
+      throw new NotFoundException('Member not found');
+    }
 
     // Only self or admin can update
-    if (!isAdmin && member.id !== requesterId) {
+    if (!isAdmin && existingMember.id !== requesterId) {
       throw new ForbiddenException('You can only update your own profile');
     }
 
-    const nextCollegeId = data.collegeId ?? member.collegeId;
-    const nextDepartmentId = data.departmentId ?? member.departmentId;
+    const nextCollegeId = data.collegeId ?? existingMember.collegeId;
+    const nextDepartmentId = data.departmentId ?? existingMember.departmentId;
     if (
-      nextCollegeId !== member.collegeId ||
-      nextDepartmentId !== member.departmentId
+      nextCollegeId !== existingMember.collegeId ||
+      nextDepartmentId !== existingMember.departmentId
     ) {
       await this.ensureCollegeDepartmentRelation(
         nextCollegeId,
@@ -326,14 +458,19 @@ export class MembersService {
       );
     }
 
-    return this.prisma.member.update({
+    const updatedMember = await this.prisma.member.update({
       where: { id },
       data,
       include: {
         college: true,
         department: true,
+        positions: {
+          orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+        },
       },
     });
+
+    return this.formatMemberDetailResponse(updatedMember);
   }
 
   async remove(id: string) {

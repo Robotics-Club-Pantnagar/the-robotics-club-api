@@ -1,6 +1,6 @@
 {
   "name": "the-robotics-club-api",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Robotics Club Backend API built with NestJS, Prisma, and BullMQ for task scheduling. Provides RESTful endpoints for managing blogs, projects, events, and more, with rich text support via Tiptap and media handling through Cloudinary.",
   "author": "Debjyoti Mondal <debjyotimondal@gmail.com>",
   "private": true,

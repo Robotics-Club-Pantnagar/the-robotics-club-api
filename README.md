@@ -73,6 +73,9 @@ Primary decorators used in routes:
 - `GET /participants/me/events`
 - `GET /participants/:id`
 
+Participant profile response shape:
+- Profile endpoints return both relation IDs (`collegeId`, `departmentId`) and nested relation objects (`college`, `department`) for display-ready rendering.
+
 Participant onboarding behavior:
 - Frontend should use Clerk `publicMetadata.profileCompleted` to decide onboarding vs dashboard.
 - If `profileCompleted` is not true, collect required participant details and call `POST /participants/signup`.
@@ -113,8 +116,20 @@ Additional admin utility routes are available for template management and event-
 
 
 ### Members and Invitations
+- `GET /members`
+  - Default: returns both accepted members and invited (pending) members.
+  - Optional query: `invited=true|false`
+    - `true` => invited/pending members only
+    - `false` => accepted members only
+  - Other filters (`search`, `position`, `collegeId`, `departmentId`, `graduationYear`) continue to apply.
+  - List payload includes both relationship IDs (`collegeId`, `departmentId`) and nested relation objects (`college`, `department`), and returns only `currentPosition` for fast first-load rendering.
+  - Invitation state in list/detail payloads is `acceptedInvitation`.
+- `GET /members/:id`
+  - Returns full member profile and complete `positions[]` history (on-demand detail fetch).
 - `POST /members/invite` (admin)
 - Invite creates a pending member record immediately (invitation ID as temporary ID).
+- Invite payload supports optional initial position history via `positions[]` entries:
+  - `position`, `startMonth`, `startYear`, optional `endMonth`, optional `endYear`
 - On Clerk `user.created` (team webhook), backend activates and updates the pending member record.
 - On Clerk `user.updated` (team webhook), backend syncs Clerk-managed fields only (name/email/username/imageUrl).
 
@@ -310,6 +325,14 @@ Generated OpenAPI spec:
 
 Generation script:
 - [src/scripts/generate-docs.ts](src/scripts/generate-docs.ts)
+
+Type generation compatibility check (openapi-typescript):
+
+```bash
+npx --yes openapi-typescript docs/openapi.yaml -o /tmp/openapi-types-from-spec.d.ts
+```
+
+The generated spec uses component schema references and nested DTO schemas, so frontend type generators can resolve reusable models instead of flattening large inline objects.
 
 ## Notes
 

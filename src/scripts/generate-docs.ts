@@ -19,6 +19,41 @@ const HTTP_METHODS = [
   'options',
   'head',
 ] as const;
+const API_DESCRIPTION = [
+  'API for the college robotics club management platform.',
+  '',
+  '## Response Envelope',
+  'Successful JSON responses follow this shape:',
+  '',
+  '```json',
+  '{',
+  '  "success": true,',
+  '  "data": {}',
+  '}',
+  '```',
+  '',
+  'Generated response data DTOs are emitted as separate schemas in components.schemas using the pattern <Operation>_<Status>Data.',
+  '',
+  '## Pagination',
+  'Paginated endpoints accept query params `limit` and `offset`.',
+  'Their `data` object follows the shared `CommonPaginatedData` structure: `items`, `total`, `limit`, and `offset`.',
+  '',
+  '## Common Error Response',
+  'Errors follow this shape:',
+  '',
+  '```json',
+  '{',
+  '  "success": false,',
+  '  "error": {',
+  '    "code": "VALIDATION_ERROR",',
+  '    "message": "Invalid data provided",',
+  '    "details": {}',
+  '  }',
+  '}',
+  '```',
+  '',
+  'Reusable error schemas and response templates are available in components.schemas and components.responses.',
+].join('\n');
 
 type JsonObject = Record<string, unknown>;
 type ResourceSchemaMap = Record<string, unknown>;
@@ -29,6 +64,17 @@ function isObject(value: unknown): value is JsonObject {
 
 function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function ensureObjectProperty(target: JsonObject, key: string): JsonObject {
+  const current = target[key];
+  if (isObject(current)) {
+    return current;
+  }
+
+  const created: JsonObject = {};
+  target[key] = created;
+  return created;
 }
 
 function decodePointerSegment(segment: string): string {
@@ -61,62 +107,6 @@ function resolveRef(document: JsonObject, ref: string): unknown {
   }
 
   return current ?? null;
-}
-
-function inlineSchemaRefs(
-  value: unknown,
-  document: JsonObject,
-  seenRefs = new Set<string>(),
-): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => inlineSchemaRefs(item, document, seenRefs));
-  }
-
-  if (!isObject(value)) {
-    return value;
-  }
-
-  const ref = value.$ref;
-  if (typeof ref === 'string') {
-    if (seenRefs.has(ref)) {
-      return { $ref: ref };
-    }
-
-    const resolved = resolveRef(document, ref);
-    if (resolved !== null) {
-      const nextSeen = new Set(seenRefs);
-      nextSeen.add(ref);
-
-      const inlined = inlineSchemaRefs(deepClone(resolved), document, nextSeen);
-
-      const siblingEntries = Object.entries(value).filter(
-        ([key]) => key !== '$ref',
-      );
-      if (siblingEntries.length === 0) {
-        return inlined;
-      }
-
-      if (!isObject(inlined)) {
-        return inlined;
-      }
-
-      const merged: JsonObject = { ...inlined };
-      for (const [key, nested] of siblingEntries) {
-        merged[key] = inlineSchemaRefs(nested, document, nextSeen);
-      }
-
-      return merged;
-    }
-
-    return value;
-  }
-
-  const result: JsonObject = {};
-  for (const [key, nested] of Object.entries(value)) {
-    result[key] = inlineSchemaRefs(nested, document, seenRefs);
-  }
-
-  return result;
 }
 
 function generateExampleFromSchema(
@@ -297,6 +287,102 @@ function getOrCreateJsonMedia(content: JsonObject): JsonObject {
   return created;
 }
 
+function getOrCreateComponentSchemas(document: JsonObject): JsonObject {
+  const components = ensureObjectProperty(document, 'components');
+  return ensureObjectProperty(components, 'schemas');
+}
+
+function getOrCreateComponentResponses(document: JsonObject): JsonObject {
+  const components = ensureObjectProperty(document, 'components');
+  return ensureObjectProperty(components, 'responses');
+}
+
+function toSchemaNameSegment(rawValue: string): string {
+  const sanitized = rawValue
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (sanitized.length === 0) {
+    return 'Operation';
+  }
+
+  return /^[A-Za-z_]/.test(sanitized) ? sanitized : `_${sanitized}`;
+}
+
+function getOperationSchemaBaseName(
+  pathKey: string,
+  method: string,
+  statusCode: string,
+  operation: JsonObject,
+): string {
+  const operationId =
+    typeof operation.operationId === 'string' &&
+    operation.operationId.length > 0
+      ? operation.operationId
+      : `${method}_${pathKey}`;
+
+  return toSchemaNameSegment(`${operationId}_${statusCode}`);
+}
+
+function createSuccessResponseSchemaFromDataRef(
+  dataSchemaRef: string,
+): JsonObject {
+  return {
+    allOf: [
+      { $ref: '#/components/schemas/CommonSuccessEnvelope' },
+      {
+        type: 'object',
+        required: ['data'],
+        properties: {
+          data: {
+            $ref: dataSchemaRef,
+          },
+        },
+      },
+    ],
+  };
+}
+
+function extractDataSchemaFromResponseSchema(schemaValue: unknown): unknown {
+  if (!isObject(schemaValue)) {
+    return undefined;
+  }
+
+  const properties = schemaValue.properties;
+  if (isObject(properties) && properties.data !== undefined) {
+    return deepClone(properties.data);
+  }
+
+  const allOf = schemaValue.allOf;
+  if (Array.isArray(allOf)) {
+    for (const part of allOf) {
+      const extracted = extractDataSchemaFromResponseSchema(part);
+      if (extracted !== undefined) {
+        return extracted;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function isSuccessEnvelopeSchema(schemaValue: unknown): boolean {
+  if (!isObject(schemaValue)) {
+    return false;
+  }
+
+  const properties = schemaValue.properties;
+  if (isObject(properties)) {
+    return properties.success !== undefined && properties.data !== undefined;
+  }
+
+  const allOf = schemaValue.allOf;
+  if (Array.isArray(allOf)) {
+    return allOf.some((part) => isSuccessEnvelopeSchema(part));
+  }
+
+  return false;
+}
+
 function getRequestBodySchema(
   operation: JsonObject,
   document: JsonObject,
@@ -435,6 +521,38 @@ function createPaginatedDataSchema(itemSchema?: unknown): JsonObject {
   };
 }
 
+function createPaginatedDataSchemaFromCommon(itemSchema?: unknown): JsonObject {
+  return {
+    allOf: [
+      {
+        $ref: '#/components/schemas/CommonPaginatedData',
+      },
+      {
+        type: 'object',
+        required: ['items'],
+        properties: {
+          items: createArraySchema(itemSchema),
+        },
+      },
+    ],
+  };
+}
+
+function ensureOperationItemSchema(
+  componentSchemas: JsonObject,
+  schemaName: string,
+  itemSchema?: unknown,
+): JsonObject {
+  componentSchemas[schemaName] =
+    itemSchema !== undefined
+      ? deepClone(itemSchema)
+      : createDefaultItemSchema();
+
+  return {
+    $ref: `#/components/schemas/${schemaName}`,
+  };
+}
+
 function getInferredResourceSchema(
   pathKey: string,
   resourceSchemas: ResourceSchemaMap,
@@ -459,43 +577,222 @@ function buildResourceSchemaMap(
       continue;
     }
 
-    const postOperation = pathItemValue.post;
-    if (!isObject(postOperation)) {
+    const baseResource = getBaseResource(pathKey);
+    if (!baseResource || map[baseResource] !== undefined) {
       continue;
     }
 
-    const requestBodySchema = getRequestBodySchema(postOperation, document);
+    const candidateOperations = [
+      pathItemValue.post,
+      pathItemValue.patch,
+      pathItemValue.put,
+    ];
+
+    let requestBodySchema: unknown;
+    for (const candidateOperation of candidateOperations) {
+      if (!isObject(candidateOperation)) {
+        continue;
+      }
+
+      requestBodySchema = getRequestBodySchema(candidateOperation, document);
+      if (requestBodySchema !== undefined) {
+        break;
+      }
+    }
+
     if (requestBodySchema === undefined) {
       continue;
     }
 
-    const baseResource = getBaseResource(pathKey);
-    if (!baseResource) {
-      continue;
-    }
-
-    map[baseResource] = inlineSchemaRefs(requestBodySchema, document);
+    map[baseResource] = deepClone(requestBodySchema);
   }
 
   return map;
 }
 
-function createDefaultSuccessSchema(dataSchema?: unknown): JsonObject {
-  return {
+function ensureSharedDocumentationComponents(document: JsonObject): void {
+  const schemas = getOrCreateComponentSchemas(document);
+  const responses = getOrCreateComponentResponses(document);
+
+  schemas.CommonSuccessEnvelope = {
     type: 'object',
-    required: ['success', 'data'],
+    required: ['success'],
     properties: {
       success: {
         type: 'boolean',
         example: true,
       },
-      data:
-        dataSchema !== undefined
-          ? dataSchema
-          : {
-              type: 'object',
-              additionalProperties: true,
-            },
+    },
+    description: 'Shared success envelope for JSON responses.',
+  };
+
+  const paginatedDataSchema = createPaginatedDataSchema();
+  paginatedDataSchema.description =
+    'Shared pagination object used under the `data` key for paginated endpoints.';
+  schemas.CommonPaginatedData = paginatedDataSchema;
+
+  schemas.CommonErrorDetails = {
+    type: 'object',
+    additionalProperties: true,
+    description: 'Optional extra error context.',
+  };
+
+  schemas.CommonErrorBody = {
+    type: 'object',
+    required: ['code', 'message'],
+    properties: {
+      code: {
+        type: 'string',
+        example: 'VALIDATION_ERROR',
+      },
+      message: {
+        type: 'string',
+        example: 'Invalid data provided',
+      },
+      details: {
+        $ref: '#/components/schemas/CommonErrorDetails',
+      },
+    },
+  };
+
+  schemas.CommonErrorEnvelope = {
+    type: 'object',
+    required: ['success', 'error'],
+    properties: {
+      success: {
+        type: 'boolean',
+        example: false,
+      },
+      error: {
+        $ref: '#/components/schemas/CommonErrorBody',
+      },
+    },
+  };
+
+  const commonErrorResponseContent = {
+    'application/json': {
+      schema: {
+        $ref: '#/components/schemas/CommonErrorEnvelope',
+      },
+    },
+  };
+
+  responses.CommonBadRequest = {
+    description: 'Validation error or malformed request.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid data provided',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonUnauthorized = {
+    description: 'Authentication required or token invalid.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Unauthorized',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonForbidden = {
+    description: 'Authenticated but missing required permissions.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Forbidden resource',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonNotFound = {
+    description: 'Requested resource not found.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Record not found',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonConflict = {
+    description: 'Conflict with existing data or state.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'A record with this value already exists',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonRateLimited = {
+    description: 'Too many requests in a short period.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Too many requests',
+          },
+        },
+      },
+    },
+  };
+
+  responses.CommonInternalError = {
+    description: 'Unexpected server-side failure.',
+    content: {
+      ...commonErrorResponseContent,
+      'application/json': {
+        ...commonErrorResponseContent['application/json'],
+        example: {
+          success: false,
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'An unexpected error occurred',
+          },
+        },
+      },
     },
   };
 }
@@ -564,10 +861,6 @@ function enrichRequestBody(operation: JsonObject, document: JsonObject): void {
     return;
   }
 
-  if (jsonMedia.schema !== undefined) {
-    jsonMedia.schema = inlineSchemaRefs(jsonMedia.schema, document);
-  }
-
   if (jsonMedia.example === undefined && jsonMedia.examples === undefined) {
     const example = generateExampleFromSchema(jsonMedia.schema, document);
     if (example !== undefined) {
@@ -583,6 +876,7 @@ function ensureSuccessResponses(
   document: JsonObject,
   resourceSchemas: ResourceSchemaMap,
 ): void {
+  const componentSchemas = getOrCreateComponentSchemas(document);
   const currentResponses = operation.responses;
   const responses: JsonObject = isObject(currentResponses)
     ? currentResponses
@@ -600,6 +894,7 @@ function ensureSuccessResponses(
   }
 
   const requestBodySchema = getRequestBodySchema(operation, document);
+  const shouldGenerateAutoExample = !pathKey.startsWith('/members');
 
   for (const statusCode of successCodes) {
     const resolvedResponse = getResolvedObject(responses[statusCode], document);
@@ -630,10 +925,58 @@ function ensureSuccessResponses(
     }
 
     const jsonMedia = getOrCreateJsonMedia(content);
+    const operationSchemaBaseName = getOperationSchemaBaseName(
+      pathKey,
+      method,
+      statusCode,
+      operation,
+    );
+    const responseSchemaName = `${operationSchemaBaseName}Response`;
+    const itemSchemaName = `${operationSchemaBaseName}Item`;
+    const shouldUseExistingSchema = hasMeaningfulSchema(jsonMedia.schema);
+
+    if (shouldUseExistingSchema) {
+      const normalizedResponseSchema = deepClone(jsonMedia.schema);
+      const extractedDataSchema = isSuccessEnvelopeSchema(
+        normalizedResponseSchema,
+      )
+        ? extractDataSchemaFromResponseSchema(normalizedResponseSchema)
+        : undefined;
+
+      if (extractedDataSchema !== undefined) {
+        componentSchemas[responseSchemaName] = normalizedResponseSchema;
+        componentSchemas[`${operationSchemaBaseName}Data`] =
+          extractedDataSchema;
+      } else {
+        const dataSchemaName = `${operationSchemaBaseName}Data`;
+        componentSchemas[dataSchemaName] = normalizedResponseSchema;
+        componentSchemas[responseSchemaName] =
+          createSuccessResponseSchemaFromDataRef(
+            `#/components/schemas/${dataSchemaName}`,
+          );
+      }
+
+      jsonMedia.schema = {
+        $ref: `#/components/schemas/${responseSchemaName}`,
+      };
+
+      if (
+        shouldGenerateAutoExample &&
+        jsonMedia.example === undefined &&
+        jsonMedia.examples === undefined
+      ) {
+        const example = generateExampleFromSchema(jsonMedia.schema, document);
+        if (example !== undefined) {
+          jsonMedia.example = example;
+        }
+      }
+
+      continue;
+    }
 
     let responseDataSchema =
       requestBodySchema !== undefined
-        ? inlineSchemaRefs(requestBodySchema, document)
+        ? deepClone(requestBodySchema)
         : undefined;
 
     if (responseDataSchema === undefined) {
@@ -643,10 +986,21 @@ function ensureSuccessResponses(
       );
 
       if (isPaginatedOperation(method, operation)) {
-        responseDataSchema = createPaginatedDataSchema(inferredSchema);
+        const itemSchemaRef = ensureOperationItemSchema(
+          componentSchemas,
+          itemSchemaName,
+          inferredSchema,
+        );
+        responseDataSchema = createPaginatedDataSchemaFromCommon(itemSchemaRef);
       } else if (isListOperation(pathKey, method, operation)) {
-        responseDataSchema = createArraySchema(inferredSchema);
+        const itemSchemaRef = ensureOperationItemSchema(
+          componentSchemas,
+          itemSchemaName,
+          inferredSchema,
+        );
+        responseDataSchema = createArraySchema(itemSchemaRef);
       } else if (
+        method === 'get' &&
         isSimpleResourcePath(pathKey) &&
         inferredSchema !== undefined
       ) {
@@ -654,20 +1008,82 @@ function ensureSuccessResponses(
       }
     }
 
-    const shouldUseExistingSchema = hasMeaningfulSchema(jsonMedia.schema);
+    const normalizedDataSchema =
+      responseDataSchema !== undefined
+        ? responseDataSchema
+        : {
+            type: 'object',
+            additionalProperties: true,
+          };
 
-    if (shouldUseExistingSchema) {
-      jsonMedia.schema = inlineSchemaRefs(jsonMedia.schema, document);
-    } else {
-      jsonMedia.schema = createDefaultSuccessSchema(responseDataSchema);
-    }
+    const dataSchemaName = `${operationSchemaBaseName}Data`;
+    componentSchemas[dataSchemaName] = normalizedDataSchema;
+    componentSchemas[responseSchemaName] =
+      createSuccessResponseSchemaFromDataRef(
+        `#/components/schemas/${dataSchemaName}`,
+      );
 
-    if (jsonMedia.example === undefined && jsonMedia.examples === undefined) {
+    jsonMedia.schema = {
+      $ref: `#/components/schemas/${responseSchemaName}`,
+    };
+
+    if (
+      shouldGenerateAutoExample &&
+      jsonMedia.example === undefined &&
+      jsonMedia.examples === undefined
+    ) {
       const example = generateExampleFromSchema(jsonMedia.schema, document);
       if (example !== undefined) {
         jsonMedia.example = example;
       }
     }
+  }
+}
+
+function addResponseRefIfMissing(
+  responses: JsonObject,
+  statusCode: string,
+  componentResponseName: string,
+): void {
+  if (responses[statusCode] !== undefined) {
+    return;
+  }
+
+  responses[statusCode] = {
+    $ref: `#/components/responses/${componentResponseName}`,
+  };
+}
+
+function hasOperationSecurity(operation: JsonObject): boolean {
+  return Array.isArray(operation.security) && operation.security.length > 0;
+}
+
+function ensureCommonErrorResponses(
+  pathKey: string,
+  method: string,
+  operation: JsonObject,
+): void {
+  const currentResponses = operation.responses;
+  const responses: JsonObject = isObject(currentResponses)
+    ? currentResponses
+    : {};
+  operation.responses = responses;
+
+  addResponseRefIfMissing(responses, '400', 'CommonBadRequest');
+  addResponseRefIfMissing(responses, '429', 'CommonRateLimited');
+  addResponseRefIfMissing(responses, '500', 'CommonInternalError');
+
+  if (hasOperationSecurity(operation)) {
+    addResponseRefIfMissing(responses, '401', 'CommonUnauthorized');
+    addResponseRefIfMissing(responses, '403', 'CommonForbidden');
+  }
+
+  if (pathKey.includes('{')) {
+    addResponseRefIfMissing(responses, '404', 'CommonNotFound');
+  }
+
+  if (method === 'post' || method === 'put' || method === 'patch') {
+    addResponseRefIfMissing(responses, '409', 'CommonConflict');
   }
 }
 
@@ -696,6 +1112,8 @@ function postProcessDocument(document: JsonObject): void {
     return;
   }
 
+  ensureSharedDocumentationComponents(document);
+
   const resourceSchemas = buildResourceSchemaMap(paths, document);
 
   for (const [pathKey, pathItemValue] of Object.entries(paths)) {
@@ -717,6 +1135,7 @@ function postProcessDocument(document: JsonObject): void {
         document,
         resourceSchemas,
       );
+      ensureCommonErrorResponses(pathKey, method, operation);
     }
   }
 
@@ -732,7 +1151,7 @@ async function generateDocs() {
   // Build OpenAPI document configuration
   const config = new DocumentBuilder()
     .setTitle('The Robotics Club API')
-    .setDescription('API for the college robotics club management platform')
+    .setDescription(API_DESCRIPTION)
     .setVersion('1.0.0')
     .addServer('http://localhost:3000', 'Local Development')
     .addServer('https://api.roboticsclub.example.com', 'Production')
@@ -789,7 +1208,9 @@ async function generateDocs() {
     existingHash = fs.readFileSync(HASH_PATH, 'utf-8').trim();
   }
 
-  if (newHash === existingHash) {
+  const hasExistingYaml = fs.existsSync(YAML_PATH);
+
+  if (newHash === existingHash && hasExistingYaml) {
     console.log('✓ No API changes detected. Skipping regeneration.');
     await app.close();
     process.exit(0);
