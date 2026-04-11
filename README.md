@@ -21,7 +21,7 @@ Implemented global rules:
 - NestJS 11
 - Prisma ORM + PostgreSQL
 - Clerk (dual instance auth)
-- BullMQ + Redis (background certificate jobs)
+- BullMQ + Valkey (background certificate jobs)
 - Cloudinary (certificate storage)
 - PDFKit (PDF generation)
 
@@ -240,8 +240,8 @@ Error response:
 
 - Node.js 18+
 - PostgreSQL
-- Redis (BullMQ queue backend)
-- Valkey (application data cache backend)
+- Valkey (BullMQ queue + application response cache backend)
+- Redis with RediSearch support (tag suggestion search backend)
 - Cloudinary account
 
 ## Environment Variables
@@ -256,13 +256,17 @@ CLERK_TEAM_SECRET_KEY=sk_...
 CLERK_USER_WEBHOOK_SECRET=whsec_...
 CLERK_TEAM_WEBHOOK_SECRET=whsec_...
 
-# BullMQ queue Redis (dedicated instance)
-BULLMQ_REDIS_URL=redis://...
-# or BULLMQ_REDIS_HOST / BULLMQ_REDIS_PORT / BULLMQ_REDIS_USERNAME / BULLMQ_REDIS_PASSWORD
-
-# Application cache Valkey (dedicated instance)
+# Valkey shared by application cache and BullMQ queue
 VALKEY_URL=redis://...
 # or VALKEY_HOST / VALKEY_PORT / VALKEY_USERNAME / VALKEY_PASSWORD / VALKEY_DB
+
+# Optional BullMQ override (only when queue should use a different instance)
+# BULLMQ_REDIS_URL=redis://...
+# or BULLMQ_REDIS_HOST / BULLMQ_REDIS_PORT / BULLMQ_REDIS_USERNAME / BULLMQ_REDIS_PASSWORD / BULLMQ_REDIS_DB
+
+# Redis dedicated to tag suggestions / RediSearch index
+REDIS_URL=redis://...
+# or REDIS_HOST / REDIS_PORT / REDIS_USERNAME / REDIS_PASSWORD / REDIS_DB
 
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
@@ -281,11 +285,11 @@ AIVEN_CA_B64=...
 
 ## Caching Architecture
 
-- BullMQ uses a dedicated Redis connection via `BULLMQ_REDIS_*`.
-- Application response caching uses a separate Valkey connection via `VALKEY_*`.
+- BullMQ and application response caching both use Valkey via `VALKEY_*` by default.
+- BullMQ can optionally be pointed to a different instance via `BULLMQ_REDIS_*`.
 - Blogs and projects list/detail reads are cached in Valkey and invalidated on create/update/delete/publish/member changes.
-- Tag suggestions are stored in Valkey as tag documents (`tag`, `normalized`, `popularity`) and ranked by popularity.
-- Tag suggestion search uses RediSearch when available, with an in-memory fuzzy fallback if RediSearch is not enabled.
+- Tag suggestions are stored in Redis (`REDIS_*`) as tag documents (`tag`, `normalized`, `popularity`) and ranked by popularity.
+- Tag suggestion search uses RediSearch when available in Redis, with an in-memory fuzzy fallback if RediSearch is not enabled.
 
 ## Local Setup
 

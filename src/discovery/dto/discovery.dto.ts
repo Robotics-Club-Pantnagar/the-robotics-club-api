@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsIn,
@@ -15,6 +15,7 @@ import {
   CONTENT_VIEW_VALUES,
   type ContentView,
 } from '../../common/dto/content-view.dto';
+import { toStringArrayQuery } from '../../utils/query-array.util';
 
 export const TAG_CONTENT_TARGET_VALUES = ['blogs', 'projects', 'both'] as const;
 
@@ -22,10 +23,12 @@ export type TagContentTarget = (typeof TAG_CONTENT_TARGET_VALUES)[number];
 
 export class FindContentByTagsDto extends PaginationDto {
   @ApiProperty({
-    description: 'Array of tags used for filtering content',
+    description:
+      'Array of tags used for filtering content. Accepts repeated query keys or a single key.',
     type: [String],
     example: ['ai', 'machine-learning'],
   })
+  @Transform(({ value }) => toStringArrayQuery(value))
   @IsArray()
   @IsString({ each: true })
   tags!: string[];
