@@ -3,8 +3,9 @@ import {
   Catch,
   ArgumentsHost,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Prisma } from '../../generated/prisma/client';
 
 interface ErrorResponse {
@@ -18,8 +19,11 @@ interface ErrorResponse {
 
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(PrismaExceptionFilter.name);
+
   catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
     const { status, errorCode, message } = this.mapPrismaError(exception);
@@ -34,6 +38,10 @@ export class PrismaExceptionFilter implements ExceptionFilter {
         },
       },
     };
+
+    this.logger.warn(
+      `[${request.method}] ${request.originalUrl || request.url} Prisma known error ${exception.code}: ${message}`,
+    );
 
     response.status(status).json(errorResponse);
   }
@@ -86,11 +94,14 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
 @Catch(Prisma.PrismaClientUnknownRequestError)
 export class PrismaUnknownExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(PrismaUnknownExceptionFilter.name);
+
   catch(
     exception: Prisma.PrismaClientUnknownRequestError,
     host: ArgumentsHost,
   ) {
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
     // Check if this is a PostgreSQL trigger RAISE EXCEPTION
@@ -100,6 +111,9 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
     const triggerMatch = this.extractTriggerMessage(errorMessage);
 
     if (triggerMatch && isValidationTriggerError) {
+      this.logger.warn(
+        `[${request.method}] ${request.originalUrl || request.url} Prisma validation trigger: ${triggerMatch}`,
+      );
       const errorResponse: ErrorResponse = {
         success: false,
         error: {
@@ -112,6 +126,9 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
     }
 
     if (triggerMatch) {
+      this.logger.warn(
+        `[${request.method}] ${request.originalUrl || request.url} Prisma conflict trigger: ${triggerMatch}`,
+      );
       const errorResponse: ErrorResponse = {
         success: false,
         error: {
@@ -131,6 +148,11 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
         message: 'An unexpected database error occurred',
       },
     };
+
+    this.logger.error(
+      `[${request.method}] ${request.originalUrl || request.url} Prisma unknown error`,
+      exception.stack || exception.message,
+    );
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
   }
 
@@ -165,9 +187,16 @@ export class PrismaUnknownExceptionFilter implements ExceptionFilter {
 
 @Catch(Prisma.PrismaClientValidationError)
 export class PrismaValidationFilter implements ExceptionFilter {
+  private readonly logger = new Logger(PrismaValidationFilter.name);
+
   catch(exception: Prisma.PrismaClientValidationError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
+
+    this.logger.warn(
+      `[${request.method}] ${request.originalUrl || request.url} Prisma validation error: ${exception.message}`,
+    );
 
     const errorResponse: ErrorResponse = {
       success: false,

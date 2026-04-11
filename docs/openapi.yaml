@@ -2208,7 +2208,7 @@ paths:
         - name: tags
           required: false
           in: query
-          description: 'Filter by tag slugs (for example: ai, machine-learning)'
+          description: 'Filter by tag slugs (for example: ai, machine-learning). Supports repeated query keys or a single key.'
           schema:
             type: array
             items:
@@ -2874,7 +2874,7 @@ paths:
         - name: tags
           required: false
           in: query
-          description: 'Filter by tag slugs (for example: ai, machine-learning)'
+          description: 'Filter by tag slugs (for example: ai, machine-learning). Supports repeated query keys or a single key.'
           schema:
             type: array
             items:
@@ -3447,7 +3447,7 @@ paths:
         - name: tags
           required: true
           in: query
-          description: Array of tags used for filtering content
+          description: Array of tags used for filtering content. Accepts repeated query keys or a single key.
           schema:
             example:
               - ai

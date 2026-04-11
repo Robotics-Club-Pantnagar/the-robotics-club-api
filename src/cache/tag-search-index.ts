@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { toUniqueTagSlugs } from '../utils/tag.util';
-import { ValkeyCacheService } from './valkey-cache.service';
+import { TagSearchRedisService } from './tag-search-redis.service';
 
 export type TagSuggestion = {
   tag: string;
@@ -22,7 +22,7 @@ export class TagSearchIndexService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cacheService: ValkeyCacheService,
+    private readonly tagSearchRedisService: TagSearchRedisService,
   ) {}
 
   async onContentCreated(tags?: string[]): Promise<void> {
@@ -81,7 +81,7 @@ export class TagSearchIndexService {
     }
 
     try {
-      const client = await this.cacheService.getClient();
+      const client = await this.tagSearchRedisService.getClient();
 
       for (const tag of normalizedTags) {
         const key = this.getDocumentKey(tag);
@@ -141,7 +141,7 @@ export class TagSearchIndexService {
 
   private async seedFromDatabaseIfNeededInternal(): Promise<void> {
     try {
-      const client = await this.cacheService.getClient();
+      const client = await this.tagSearchRedisService.getClient();
       const existingCount = await client.zcard(this.popularityKey);
       if (existingCount > 0) {
         return;
@@ -187,7 +187,7 @@ export class TagSearchIndexService {
       await pipeline.exec();
     } catch (error) {
       this.logger.warn(
-        `Failed to seed Valkey tag index from DB: ${this.getErrorMessage(error)}`,
+        `Failed to seed Redis tag index from DB: ${this.getErrorMessage(error)}`,
       );
     }
   }
@@ -196,7 +196,7 @@ export class TagSearchIndexService {
     tag: string,
     popularity: number,
   ): Promise<void> {
-    const client = await this.cacheService.getClient();
+    const client = await this.tagSearchRedisService.getClient();
     const key = this.getDocumentKey(tag);
 
     await client.hset(
@@ -252,7 +252,7 @@ export class TagSearchIndexService {
       })
       .join(' ');
 
-    const client = await this.cacheService.getClient();
+    const client = await this.tagSearchRedisService.getClient();
     const raw = await client.call(
       'FT.SEARCH',
       this.indexName,
@@ -280,7 +280,7 @@ export class TagSearchIndexService {
     limit: number,
   ): Promise<TagSuggestion[]> {
     try {
-      const client = await this.cacheService.getClient();
+      const client = await this.tagSearchRedisService.getClient();
       const zsetEntries = await client.zrevrange(
         this.popularityKey,
         0,
@@ -459,7 +459,7 @@ export class TagSearchIndexService {
     }
 
     try {
-      const client = await this.cacheService.getClient();
+      const client = await this.tagSearchRedisService.getClient();
       await client.call(
         'FT.CREATE',
         this.indexName,
@@ -495,7 +495,7 @@ export class TagSearchIndexService {
       ) {
         this.rediSearchSupport = 'unavailable';
         this.logger.warn(
-          'RediSearch is not available in Valkey; using fallback search scoring.',
+          'RediSearch is not available in Redis; using fallback search scoring.',
         );
         return false;
       }

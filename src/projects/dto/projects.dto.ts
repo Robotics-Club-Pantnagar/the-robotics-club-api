@@ -6,6 +6,7 @@ import {
   IsUrl,
   IsIn,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../common/dto';
 import { Position } from '../../generated/prisma/client';
@@ -13,6 +14,7 @@ import {
   CONTENT_VIEW_VALUES,
   type ContentView,
 } from '../../common/dto/content-view.dto';
+import { toStringArrayQuery } from '../../utils/query-array.util';
 
 export class FindProjectsDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Search by project title' })
@@ -21,10 +23,12 @@ export class FindProjectsDto extends PaginationDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by tag slugs (for example: ai, machine-learning)',
+    description:
+      'Filter by tag slugs (for example: ai, machine-learning). Supports repeated query keys or a single key.',
     type: [String],
   })
   @IsOptional()
+  @Transform(({ value }) => toStringArrayQuery(value))
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
