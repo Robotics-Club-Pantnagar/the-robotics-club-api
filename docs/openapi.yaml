@@ -1741,6 +1741,35 @@ paths:
       summary: List all club members with filters
       tags:
         - Members
+  /members/username/{username}:
+    get:
+      operationId: MembersController_findByUsername
+      parameters:
+        - name: username
+          required: true
+          in: path
+          description: Member username
+          schema:
+            example: jane_smith
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembersController_findByUsername_200Response'
+        '400':
+          $ref: '#/components/responses/CommonBadRequest'
+        '404':
+          $ref: '#/components/responses/CommonNotFound'
+        '429':
+          $ref: '#/components/responses/CommonRateLimited'
+        '500':
+          $ref: '#/components/responses/CommonInternalError'
+      summary: Get member by username with positions
+      tags:
+        - Members
   /members/{id}:
     get:
       operationId: MembersController_findOne
@@ -4621,6 +4650,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -4835,6 +4865,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
           example: EXECUTIVE_MEMBER
@@ -5052,6 +5083,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5131,6 +5163,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5211,6 +5244,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5251,6 +5285,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5292,6 +5327,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5369,6 +5405,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -5695,6 +5732,7 @@ components:
             - TECHNICAL_HEAD
             - CODING_HEAD
             - LOGISTICS_HEAD
+            - SOCIAL_MEDIA_HEAD
             - EXECUTIVE_MEMBER
             - MEMBER
         startMonth:
@@ -6560,6 +6598,17 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/MembersController_findAll_200Data'
+    MembersController_findByUsername_200Data:
+      $ref: '#/components/schemas/MemberDetailDto'
+    MembersController_findByUsername_200Response:
+      allOf:
+        - $ref: '#/components/schemas/CommonSuccessEnvelope'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/MembersController_findByUsername_200Data'
     MembersController_findOne_200Data:
       $ref: '#/components/schemas/MemberDetailDto'
     MembersController_findOne_200Response:

@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiCreatedResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import {
@@ -37,6 +38,18 @@ export class MembersController {
   @ApiOkResponse({ type: MembersListDataDto })
   findAll(@Query() query: FindMembersDto) {
     return this.membersService.findAll(query);
+  }
+
+  @Get('username/:username')
+  @ApiOperation({ summary: 'Get member by username with positions' })
+  @ApiParam({
+    name: 'username',
+    description: 'Member username',
+    example: 'jane_smith',
+  })
+  @ApiOkResponse({ type: MemberDetailDto })
+  findByUsername(@Param('username') username: string) {
+    return this.membersService.findByUsername(username);
   }
 
   @Get(':id')

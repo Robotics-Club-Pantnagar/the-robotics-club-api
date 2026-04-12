@@ -133,22 +133,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private getHttpErrorCode(status: number): string {
-    switch (status) {
-      case HttpStatus.BAD_REQUEST:
-        return 'VALIDATION_ERROR';
-      case HttpStatus.UNAUTHORIZED:
-        return 'UNAUTHORIZED';
-      case HttpStatus.FORBIDDEN:
-        return 'FORBIDDEN';
-      case HttpStatus.NOT_FOUND:
-        return 'NOT_FOUND';
-      case HttpStatus.CONFLICT:
-        return 'CONFLICT';
-      case HttpStatus.TOO_MANY_REQUESTS:
-        return 'RATE_LIMIT_EXCEEDED';
-      default:
-        return 'INTERNAL_ERROR';
-    }
+    const codeByStatus: Record<number, string> = {
+      [HttpStatus.BAD_REQUEST]: 'VALIDATION_ERROR',
+      [HttpStatus.UNAUTHORIZED]: 'UNAUTHORIZED',
+      [HttpStatus.FORBIDDEN]: 'FORBIDDEN',
+      [HttpStatus.NOT_FOUND]: 'NOT_FOUND',
+      [HttpStatus.CONFLICT]: 'CONFLICT',
+      [HttpStatus.TOO_MANY_REQUESTS]: 'RATE_LIMIT_EXCEEDED',
+    };
+
+    return codeByStatus[status] ?? 'INTERNAL_ERROR';
   }
 
   private isDbTriggerException(exception: unknown): boolean {

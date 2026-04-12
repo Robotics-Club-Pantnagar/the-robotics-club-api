@@ -201,6 +201,36 @@ export class MembersService {
     return this.formatMemberDetailResponse(member);
   }
 
+  async findByUsername(username: string) {
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const member = await this.prisma.member.findUnique({
+      where: { username: normalizedUsername },
+      include: {
+        college: true,
+        department: true,
+        positions: {
+          orderBy: [{ startYear: 'desc' }, { startMonth: 'desc' }],
+        },
+        projects: {
+          include: {
+            project: true,
+          },
+        },
+        blogs: {
+          where: { published: true },
+          orderBy: { publishedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    return this.formatMemberDetailResponse(member);
+  }
+
   async findByClerkId(clerkId: string) {
     return this.prisma.member.findFirst({
       where: {
