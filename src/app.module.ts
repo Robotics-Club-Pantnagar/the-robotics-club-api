@@ -20,6 +20,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { QueueModule } from './queue/queue.module';
 import { CacheModule } from './cache/cache.module';
 import { DiscoveryModule } from './discovery/discovery.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { DiscoveryModule } from './discovery/discovery.module';
     DiscoveryModule,
     CertificatesModule,
     WebhooksModule,
+    HealthModule,
   ],
   providers: [
     {

@@ -1148,11 +1148,18 @@ async function generateDocs() {
     logger: false,
   });
 
+  // Load package.json version
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
+  const packageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, 'utf-8'),
+  ) as Record<string, unknown>;
+  const apiVersion = (packageJson.version as string) || '1.0.0';
+
   // Build OpenAPI document configuration
   const config = new DocumentBuilder()
     .setTitle('The Robotics Club API')
     .setDescription(API_DESCRIPTION)
-    .setVersion('1.0.0')
+    .setVersion(apiVersion)
     .addServer('http://localhost:3000', 'Local Development')
     .addServer('https://api.roboticsclub.example.com', 'Production')
     .addBearerAuth(

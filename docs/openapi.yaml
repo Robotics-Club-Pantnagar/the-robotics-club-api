@@ -3993,6 +3993,30 @@ paths:
       summary: Handle team/member Clerk webhook events
       tags:
         - Webhooks
+  /health:
+    get:
+      operationId: HealthController_getHealth
+      parameters: []
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthController_getHealth_200Response'
+              example:
+                success: true
+                data:
+                  - {}
+        '400':
+          $ref: '#/components/responses/CommonBadRequest'
+        '429':
+          $ref: '#/components/responses/CommonRateLimited'
+        '500':
+          $ref: '#/components/responses/CommonInternalError'
+      summary: Health check endpoint
+      tags:
+        - health
 info:
   title: The Robotics Club API
   description: >-
@@ -4045,7 +4069,7 @@ info:
 
 
     Reusable error schemas and response templates are available in components.schemas and components.responses.
-  version: 1.0.0
+  version: 0.5.4
   contact: {}
 tags:
   - name: Colleges
@@ -7081,6 +7105,22 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/WebhooksController_handleTeamClerkWebhook_200Data'
+    HealthController_getHealth_200Item:
+      type: object
+      additionalProperties: true
+    HealthController_getHealth_200Data:
+      type: array
+      items:
+        $ref: '#/components/schemas/HealthController_getHealth_200Item'
+    HealthController_getHealth_200Response:
+      allOf:
+        - $ref: '#/components/schemas/CommonSuccessEnvelope'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/HealthController_getHealth_200Data'
   responses:
     CommonBadRequest:
       description: Validation error or malformed request.
