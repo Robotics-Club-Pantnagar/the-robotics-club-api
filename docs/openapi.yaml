@@ -3995,7 +3995,7 @@ paths:
         - Webhooks
   /health:
     get:
-      operationId: HealthController_getHealth
+      operationId: HealthController_getSimpleHealth
       parameters: []
       responses:
         '200':
@@ -4003,7 +4003,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthController_getHealth_200Response'
+                $ref: '#/components/schemas/HealthController_getSimpleHealth_200Response'
               example:
                 success: true
                 data:
@@ -4014,7 +4014,30 @@ paths:
           $ref: '#/components/responses/CommonRateLimited'
         '500':
           $ref: '#/components/responses/CommonInternalError'
-      summary: Health check endpoint
+      summary: Simple health check endpoint (fast)
+      tags:
+        - health
+  /health/deep:
+    get:
+      operationId: HealthController_getDeepHealth
+      parameters: []
+      responses:
+        '200':
+          description: Application and database are healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthController_getDeepHealth_200Response'
+              example:
+                success: true
+                data: {}
+        '400':
+          $ref: '#/components/responses/CommonBadRequest'
+        '429':
+          $ref: '#/components/responses/CommonRateLimited'
+        '500':
+          $ref: '#/components/responses/CommonInternalError'
+      summary: Deep health check endpoint (includes database connectivity)
       tags:
         - health
 info:
@@ -4069,7 +4092,7 @@ info:
 
 
     Reusable error schemas and response templates are available in components.schemas and components.responses.
-  version: 0.5.4
+  version: 0.5.5
   contact: {}
 tags:
   - name: Colleges
@@ -7105,14 +7128,14 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/WebhooksController_handleTeamClerkWebhook_200Data'
-    HealthController_getHealth_200Item:
+    HealthController_getSimpleHealth_200Item:
       type: object
       additionalProperties: true
-    HealthController_getHealth_200Data:
+    HealthController_getSimpleHealth_200Data:
       type: array
       items:
-        $ref: '#/components/schemas/HealthController_getHealth_200Item'
-    HealthController_getHealth_200Response:
+        $ref: '#/components/schemas/HealthController_getSimpleHealth_200Item'
+    HealthController_getSimpleHealth_200Response:
       allOf:
         - $ref: '#/components/schemas/CommonSuccessEnvelope'
         - type: object
@@ -7120,7 +7143,19 @@ components:
             - data
           properties:
             data:
-              $ref: '#/components/schemas/HealthController_getHealth_200Data'
+              $ref: '#/components/schemas/HealthController_getSimpleHealth_200Data'
+    HealthController_getDeepHealth_200Data:
+      type: object
+      additionalProperties: true
+    HealthController_getDeepHealth_200Response:
+      allOf:
+        - $ref: '#/components/schemas/CommonSuccessEnvelope'
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              $ref: '#/components/schemas/HealthController_getDeepHealth_200Data'
   responses:
     CommonBadRequest:
       description: Validation error or malformed request.

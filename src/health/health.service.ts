@@ -5,7 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class HealthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getHealth() {
+  getSimpleHealth() {
+    return {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+    };
+  }
+
+  async getDeepHealth() {
     const dbCheck = await this.checkDatabase();
 
     return {
