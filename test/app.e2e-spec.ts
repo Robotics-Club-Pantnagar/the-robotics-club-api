@@ -4,7 +4,6 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { QueueService } from '../src/queue/queue.service';
-import { CertificateProcessor } from '../src/certificates/certificate.processor';
 
 jest.mock('../src/utils/tiptap-content.util', () => ({
   tiptapJsonToHtml: () => '<p>mock</p>',
@@ -29,9 +28,6 @@ const queueServiceMock = {
   getJobsByEvent: jest.fn(),
 };
 
-const certificateProcessorMock = {
-  process: jest.fn(),
-};
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -44,8 +40,6 @@ describe('AppController (e2e)', () => {
       .useValue(prismaServiceMock)
       .overrideProvider(QueueService)
       .useValue(queueServiceMock)
-      .overrideProvider(CertificateProcessor)
-      .useValue(certificateProcessorMock)
       .compile();
 
     app = moduleFixture.createNestApplication();

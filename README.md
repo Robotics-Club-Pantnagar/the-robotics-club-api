@@ -304,6 +304,25 @@ Run development server:
 npm run start:dev
 ```
 
+Run background worker (no HTTP server):
+
+```bash
+npm run start:worker:dev
+```
+
+Production build and run as two services:
+
+```bash
+npm run build
+node dist/main.js
+node dist/worker.js
+```
+
+Deploy API and worker as separate services with the same build output:
+
+- API command: `node dist/main.js`
+- Worker command: `node dist/worker.js`
+
 ## Scripts
 
 - `npm run format` - Prettier format
@@ -312,6 +331,8 @@ npm run start:dev
 - `npm test` - unit tests
 - `npm run test:e2e` - e2e tests
 - `npm run generate:api-docs` - generate [docs/openapi.yaml](docs/openapi.yaml)
+- `npm run start:worker` - run worker from dist
+- `npm run start:worker:dev` - run worker in watch mode
 
 ## Verification Workflow
 
