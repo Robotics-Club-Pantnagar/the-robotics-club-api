@@ -66,3 +66,8 @@ frontend_generation_participant.md
 frontend_generation_team_admin.md
 tags.md
 release-v0.4.1.md
+
+
+# Buildinfo and prompts
+*.tsbuildinfo
+.github/prompts

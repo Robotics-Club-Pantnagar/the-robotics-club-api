@@ -2,7 +2,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { prepareAivenCert } from '../utils/aiven-cert.util';
+// import { prepareAivenCert } from '../utils/aiven-cert.util';
 
 @Injectable()
 export class PrismaService
@@ -10,7 +10,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    prepareAivenCert();
+    // prepareAivenCert();
     const adapter = new PrismaPg({
       connectionString: process.env.DATABASE_URL,
     });
