@@ -22,6 +22,7 @@ Implemented global rules:
 - Prisma ORM + PostgreSQL
 - Clerk (dual instance auth)
 - BullMQ + Valkey (background certificate jobs)
+- Upstash Redis (REST cache + tag search)
 - Cloudinary (certificate storage)
 - PDFKit (PDF generation)
 

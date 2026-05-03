@@ -19,8 +19,8 @@ import sanitizeHtml from 'sanitize-html';
 import slugify from 'slugify';
 import { tiptapJsonToHtml } from '../utils/tiptap-content.util';
 import { CloudinaryService } from '../cloudinary';
+import { CacheService } from '../cache/cache.service';
 import { TagSearchIndexService } from '../cache/tag-search-index';
-import { ValkeyCacheService } from '../cache/valkey-cache.service';
 import { toUniqueTagSlugs } from '../utils/tag.util';
 
 type UploadedImageFile = {
@@ -49,7 +49,7 @@ export class BlogsService {
   constructor(
     private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
-    private cacheService: ValkeyCacheService,
+    private cacheService: CacheService,
     private tagSearchService: TagSearchIndexService,
   ) {}
 

@@ -81,7 +81,7 @@ export class TagSearchIndexService {
     }
 
     try {
-      const client = await this.tagSearchRedisService.getClient();
+      const client = this.tagSearchRedisService.getClient();
 
       for (const tag of normalizedTags) {
         const key = this.getDocumentKey(tag);
@@ -108,16 +108,15 @@ export class TagSearchIndexService {
           continue;
         }
 
-        await client.hset(
-          key,
-          'tag',
+        await client.hset(key, {
           tag,
-          'normalized',
-          this.toNormalizedTag(tag),
-          'popularity',
-          String(numericPopularity),
-        );
-        await client.zadd(this.popularityKey, numericPopularity, tag);
+          normalized: this.toNormalizedTag(tag),
+          popularity: String(numericPopularity),
+        });
+        await client.zadd(this.popularityKey, {
+          score: numericPopularity,
+          member: tag,
+        });
       }
     } catch (error) {
       this.logger.warn(
@@ -141,7 +140,7 @@ export class TagSearchIndexService {
 
   private async seedFromDatabaseIfNeededInternal(): Promise<void> {
     try {
-      const client = await this.tagSearchRedisService.getClient();
+      const client = this.tagSearchRedisService.getClient();
       const existingCount = await client.zcard(this.popularityKey);
       if (existingCount > 0) {
         return;
@@ -172,16 +171,15 @@ export class TagSearchIndexService {
         }
 
         const key = this.getDocumentKey(entry.tag);
-        pipeline.hset(
-          key,
-          'tag',
-          entry.tag,
-          'normalized',
-          this.toNormalizedTag(entry.tag),
-          'popularity',
-          String(popularity),
-        );
-        pipeline.zadd(this.popularityKey, popularity, entry.tag);
+        pipeline.hset(key, {
+          tag: entry.tag,
+          normalized: this.toNormalizedTag(entry.tag),
+          popularity: String(popularity),
+        });
+        pipeline.zadd(this.popularityKey, {
+          score: popularity,
+          member: entry.tag,
+        });
       }
 
       await pipeline.exec();
@@ -196,19 +194,18 @@ export class TagSearchIndexService {
     tag: string,
     popularity: number,
   ): Promise<void> {
-    const client = await this.tagSearchRedisService.getClient();
+    const client = this.tagSearchRedisService.getClient();
     const key = this.getDocumentKey(tag);
 
-    await client.hset(
-      key,
-      'tag',
+    await client.hset(key, {
       tag,
-      'normalized',
-      this.toNormalizedTag(tag),
-      'popularity',
-      String(popularity),
-    );
-    await client.zadd(this.popularityKey, popularity, tag);
+      normalized: this.toNormalizedTag(tag),
+      popularity: String(popularity),
+    });
+    await client.zadd(this.popularityKey, {
+      score: popularity,
+      member: tag,
+    });
   }
 
   private async countTagUsage(tag: string): Promise<number> {
@@ -252,8 +249,8 @@ export class TagSearchIndexService {
       })
       .join(' ');
 
-    const client = await this.tagSearchRedisService.getClient();
-    const raw = await client.call(
+    const client = this.tagSearchRedisService.getClient();
+    const raw = await client.exec([
       'FT.SEARCH',
       this.indexName,
       query,
@@ -270,7 +267,7 @@ export class TagSearchIndexService {
       'popularity',
       'DIALECT',
       '2',
-    );
+    ]);
 
     return this.parseRediSearchResponse(raw);
   }
@@ -280,12 +277,15 @@ export class TagSearchIndexService {
     limit: number,
   ): Promise<TagSuggestion[]> {
     try {
-      const client = await this.tagSearchRedisService.getClient();
-      const zsetEntries = await client.zrevrange(
+      const client = this.tagSearchRedisService.getClient();
+      const zsetEntries: string[] = await client.zrange(
         this.popularityKey,
         0,
         999,
-        'WITHSCORES',
+        {
+          rev: true,
+          withScores: true,
+        },
       );
 
       if (zsetEntries.length === 0) {
@@ -315,9 +315,7 @@ export class TagSearchIndexService {
         const tag = tags[i];
         const fallbackPopularity = popularityByTag.get(tag) ?? 0;
 
-        const hash = hashResults?.[i]?.[1] as
-          | Record<string, string>
-          | undefined;
+        const hash = hashResults?.[i] as Record<string, string> | null;
         const normalized =
           hash?.normalized && hash.normalized.trim().length > 0
             ? hash.normalized
@@ -459,8 +457,8 @@ export class TagSearchIndexService {
     }
 
     try {
-      const client = await this.tagSearchRedisService.getClient();
-      await client.call(
+      const client = this.tagSearchRedisService.getClient();
+      await client.exec([
         'FT.CREATE',
         this.indexName,
         'ON',
@@ -476,7 +474,7 @@ export class TagSearchIndexService {
         'popularity',
         'NUMERIC',
         'SORTABLE',
-      );
+      ]);
 
       this.rediSearchSupport = 'available';
       return true;

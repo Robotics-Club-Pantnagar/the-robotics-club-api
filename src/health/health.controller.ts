@@ -26,7 +26,9 @@ export class HealthController {
   }
 
   @Get('deep')
-  @ApiOperation({ summary: 'Deep health check endpoint (includes database connectivity)' })
+  @ApiOperation({
+    summary: 'Deep health check endpoint (includes database connectivity)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Application and database are healthy',
